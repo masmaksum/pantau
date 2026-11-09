@@ -29,6 +29,7 @@ export interface Event {
   magnitude?: number;
   depth?: string;
   confidence?: string;
+  topicHints?: string[];
 }
 export interface SourceStatus {
   id: string;

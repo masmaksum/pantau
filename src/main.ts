@@ -1,5 +1,6 @@
 import L from "leaflet";
 import type Hls from "hls.js";
+import { isAllowedReport, visibleCategories } from "../shared/topic-policy.js";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import type {
@@ -75,7 +76,7 @@ document.querySelector("#app")!.innerHTML = `
     <aside class="sidebar">
       <div class="panel-title"><span>01 / IKHTISAR</span><span class="small-tag">INDONESIA</span></div>
       <div class="metrics"><div><strong id="count-events">—</strong><span>Laporan</span></div><div><strong id="count-located">—</strong><span>Dengan lokasi</span></div><div><strong id="count-sources">—</strong><span>Sumber aktif</span></div><div><strong id="count-regions">—</strong><span>Lokasi berbeda</span></div></div>
-      <p class="metric-note">Jumlah mengikuti filter. Satu laporan belum tentu satu kejadian unik.</p>
+      <p class="metric-note">Kriminal, transportasi, ekonomi, dan selebritis dikecualikan. Satu laporan belum tentu satu kejadian unik.</p>
       <div class="side-section"><div class="panel-title"><span>CUACA LOKAL</span><span class="small-tag">MODEL</span></div><label class="sr-only" for="city">Kota cuaca</label><select id="city"><option value="jakarta">Jakarta</option></select><div id="weather" class="weather"><p class="muted">Mengambil prakiraan…</p></div></div>
       <div class="side-section source-section"><div class="panel-title"><span>KESEHATAN SUMBER</span><span id="health-count">—</span></div><div id="sources"><p class="muted">Menghubungkan sumber…</p></div></div>
       <div class="side-foot"><span class="compass">↗</span><p>Data membantu orientasi.<br>Konfirmasi sebelum bertindak.</p></div>
@@ -88,10 +89,8 @@ document.querySelector("#app")!.innerHTML = `
     </section>
     <section class="wire-panel" aria-label="Daftar laporan">
       <div class="panel-title wire-heading"><span>03 / LAPORAN TERBARU</span><span id="wire-count">—</span></div>
-      <div class="wire-controls"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Cari kejadian, kota, sumber…" aria-label="Cari laporan" /></label><div class="filter-row"><select id="category" aria-label="Kategori"><option value="all">Semua kategori</option>${Object.entries(
-        labels,
-      )
-        .map(([k, v]) => `<option value="${k}">${v}</option>`)
+      <div class="wire-controls"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Cari kejadian, kota, sumber…" aria-label="Cari laporan" /></label><div class="filter-row"><select id="category" aria-label="Kategori"><option value="all">Semua kategori</option>${visibleCategories
+        .map((k) => `<option value="${k}">${labels[k]}</option>`)
         .join(
           "",
         )}</select><select id="hours" aria-label="Rentang waktu"><option value="6">6 jam</option><option value="24" selected>24 jam</option><option value="72">72 jam</option></select></div><label class="checkbox"><input type="checkbox" id="located-only" /> Hanya laporan dengan lokasi</label></div>
@@ -103,7 +102,7 @@ document.querySelector("#app")!.innerHTML = `
   <footer><span class="footer-brand">PANTAU<span> / </span>BUILT FOR CONTEXT.</span><span>Pembaruan 120 detik · Waktu WIB · Implementasi mandiri</span></footer>
 </main>
 <dialog id="detail"><button class="dialog-close" data-close="detail" aria-label="Tutup detail">×</button><div id="detail-content"></div></dialog>
-<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Fitur SITREP seperti pasar, AIS, ADS-B, MAGMA, lalu lintas TomTom, pembaca artikel lengkap, dan analisis AI belum diimplementasikan pada versi ini.</p></dialog>
+<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Aturan pengecualian didahulukan pada laporan campuran. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Fitur SITREP seperti pasar, AIS, ADS-B, MAGMA, lalu lintas TomTom, pembaca artikel lengkap, dan analisis AI belum diimplementasikan pada versi ini.</p></dialog>
 <dialog id="connection"><button class="dialog-close" data-close="connection" aria-label="Tutup pengaturan">×</button><div class="eyebrow">KONEKSI</div><h2>Token akses instans</h2><p>Isi hanya bila operator mengaktifkan PANTAU_API_TOKEN. Token disimpan pada sesi tab ini.</p><form id="token-form"><input type="password" id="api-token" placeholder="Token akses" aria-label="Token akses" autocomplete="off" /><button class="solid-button" type="submit">Simpan & hubungkan</button></form></dialog>
 <dialog id="camera-dialog"><button class="dialog-close" data-close="camera-dialog" aria-label="Tutup kamera">×</button><h2 id="camera-name"></h2><video id="camera-video" controls playsinline></video><p id="camera-message" role="status"></p></dialog>
 <div id="toast" role="status" hidden></div>`;
@@ -197,15 +196,17 @@ function render() {
   const onlyLocated = $<HTMLInputElement>("located-only").checked;
   const windowStart =
     Date.now() - Number($<HTMLSelectElement>("hours").value) * 3_600_000;
-  filtered = snapshot.events.filter(
-    (e) =>
-      Date.parse(e.publishedAt ?? "") >= windowStart &&
-      (category === "all" || e.category === category) &&
-      (!onlyLocated || !!e.location) &&
-      `${e.title} ${e.source} ${e.location?.name ?? ""}`
-        .toLocaleLowerCase("id")
-        .includes(search),
-  );
+  filtered = snapshot.events
+    .filter(isAllowedReport)
+    .filter(
+      (e) =>
+        Date.parse(e.publishedAt ?? "") >= windowStart &&
+        (category === "all" || e.category === category) &&
+        (!onlyLocated || !!e.location) &&
+        `${e.title} ${e.source} ${e.location?.name ?? ""}`
+          .toLocaleLowerCase("id")
+          .includes(search),
+    );
   const located = filtered.filter((e) => e.location);
   $("count-events").textContent = String(filtered.length);
   $("count-located").textContent = String(located.length);

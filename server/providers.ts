@@ -1,5 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import type { Event, Weather } from "../shared/types.js";
+import { excludedTopic } from "../shared/topic-policy.js";
 import {
   canonicalUrl,
   classify,
@@ -54,11 +55,16 @@ export function parseFeed(
       const summary = textOnly(
         item.description ?? item.summary?.["#text"] ?? item.summary ?? "",
       ).slice(0, 600);
+      const topicHints = array<any>(item.category).map((category) =>
+        textOnly(category?.["#text"] ?? category?.["@_term"] ?? category),
+      );
+      if (excludedTopic(title, summary, topicHints)) return [];
       return [
         {
           id: idFor(canonicalUrl(url)),
           title,
           summary,
+          topicHints,
           url,
           source,
           category: classify(title),

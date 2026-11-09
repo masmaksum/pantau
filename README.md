@@ -33,7 +33,8 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 
 - Dashboard responsif dengan peta Leaflet, daftar laporan, detail kejadian, dan kondisi sumber.
 - RSS ANTARA dan detikNews; ringkasan hanya jika tersedia dalam RSS, dengan tautan penerbit asli.
-- Pengelompokan kata kunci: gempa, banjir/longsor, kebakaran, demo, kriminal, politik, transportasi, lainnya.
+- Pengelompokan laporan yang lolos kebijakan topik: gempa, banjir/longsor, kebakaran, demo, politik, dan lainnya.
+- Pengecualian kriminal, transportasi, ekonomi, dan selebritis pada judul, ringkasan, serta kategori RSS/Atom; berlaku juga untuk feed sosial dan cache lama.
 - Pencocokan judul ke gazetteer kota/provinsi terbatas. Lokasi ambigu tetap kosong. Setiap pin mencantumkan ketelitian dan metode penentuan lokasi.
 - Gempa BMKG melalui data JSON resmi, dengan waktu, magnitudo, kedalaman, dan episentrum.
 - Cuaca Open-Meteo per kota: suhu, hujan, angin, dan prakiraan tiga hari.
@@ -43,6 +44,14 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Cache terakhir yang berhasil, penanda data lama, jeda retry, dan penggabungan request bersamaan ke sumber yang sama.
 - Konfigurasi CCTV HLS/tautan dan feed sosial RSS resmi/berizin. Tidak ada kamera atau posting sosial bawaan yang dibuat-buat.
 - Token akses API opsional untuk instans yang memerlukannya.
+
+## Batasan topik
+
+PANTAU tidak menampilkan laporan **kriminal, transportasi, ekonomi, atau selebritis**. Kebijakan ada di `shared/topic-policy.ts`: kata kunci dan padanannya diperiksa pada judul, ringkasan, serta kategori RSS/Atom sebelum hasil ingestion disimpan. Respons API memeriksa ulang cache lama, sehingga laporan lama tidak dapat melewati kebijakan. Penghitungan item sumber mengikuti hasil yang lolos.
+
+Pengecualian didahulukan pada laporan campuran: misalnya “banjir menyebabkan kemacetan” tetap dikecualikan karena membahas transportasi. Laporan bencana, demonstrasi, dan politik yang tidak cocok dengan pengecualian tetap ditampilkan. Kategori kriminal dan transportasi tidak lagi tersedia di pilihan filter; kategori internal lama masih dikenali untuk kompatibilitas cache. Pengecualian berlaku pada daftar, peta, ringkasan jumlah laporan, dan ekspor GeoJSON. Prakiraan cuaca dan konfigurasi kamera bukan laporan berita dan tidak menjalani klasifikasi topik ini.
+
+Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah tersaring atau lolos bila memakai istilah/nama yang belum dikenal. `Lainnya` tetap tersedia untuk topik yang tidak dilarang; ini bukan whitelist topik bencana. Aturan bisa diperluas berdasarkan contoh berita yang ditemukan.
 
 ## Integrasi dan status nyata
 

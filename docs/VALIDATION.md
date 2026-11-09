@@ -35,3 +35,10 @@ Yang **belum diverifikasi**:
 - Kesetaraan seluruh fitur SITREP atau validitas faktual setiap berita. Kategori/geolokasi berita masih heuristik.
 
 Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi kemudian berhasil mengambil feed yang sama. Status sumber dan waktu pengambilan pada instans yang dijalankan pengguna tetap menjadi acuan, bukan hasil sesi ini.
+
+## Pembaruan v0.1.1 — pengecualian topik
+
+- 22 tes lulus, termasuk pengecualian empat topik, laporan campuran, kategori RSS/Atom, dan API yang membaca cache lama.
+- Build produksi berhasil.
+- Smoke upstream: ANTARA 41 item yang lolos, detik 87, BMKG 15; 129 laporan berada dalam rentang 24 jam dan empat memiliki lokasi. Open-Meteo berhasil. Jumlah berubah mengikuti feed.
+- Pemeriksaan browser tetap belum dilakukan; perubahan antarmuka memakai kebijakan bersama dengan backend untuk menyaring daftar/peta/ekspor.

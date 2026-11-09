@@ -98,3 +98,7 @@ Tool browser bersama tidak tersedia pada sesi implementasi. Mengikuti panduan li
 ## Pengembangan berikutnya
 
 Prioritas: validasi UI browser desktop/mobile; uji provider BMKG dari host deployment; perluas gazetteer memakai data wilayah berlisensi jelas; tambahkan first-seen store dan klaster kejadian dengan jejak bukti; tambahkan provider sosial, MAGMA/SiPongi/AQMS hanya setelah kontrak dan izin sumber jelas. Adapter transportasi dan ringkasan AI dapat ditambahkan sebagai modul terpisah dengan key milik operator.
+
+## Pembaruan kebijakan topik v0.1.1
+
+Atas permintaan pemilik, PANTAU mengecualikan kriminal, transportasi, ekonomi, dan selebritis. Penyaringan baru diterapkan pada judul/ringkasan/kategori RSS-Atom, diperiksa ulang untuk cache lama dan tampilan, serta didahulukan atas kategori positif pada laporan campuran. Kriminal/transportasi tidak lagi menjadi pilihan filter. Ini keputusan editorial PANTAU, bukan fitur yang disimpulkan dari SITREP.
