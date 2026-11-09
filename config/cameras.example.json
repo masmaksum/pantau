@@ -1,0 +1,10 @@
+[
+  {
+    "id": "kamera-anda",
+    "name": "Nama kamera publik berizin",
+    "region": "Jakarta",
+    "url": "https://example.com/public-camera.m3u8",
+    "sourceUrl": "https://example.com/terms",
+    "type": "hls"
+  }
+]

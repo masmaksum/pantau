@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.cache/
+coverage/
+*.log
+config/cameras.json
+config/social.json
