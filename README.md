@@ -2,7 +2,7 @@
 
 **Ruang pantau sumber terbuka Indonesia.** Berita, peta laporan, gempa, cuaca, dan hotspot opsional dalam satu dashboard berbahasa Indonesia.
 
-PANTAU adalah implementasi mandiri berdasarkan pengamatan antarmuka publik [SITREP Indonesia](https://sitrep-production.up.railway.app/), dibuat untuk `masmaksum/pantau`. Ini **bukan source code backend asli**, bukan proyek resmi SITREP, dan belum memiliki kesetaraan seluruh fitur. Kode, desain, dan pipeline dalam repositori ini ditulis baru; tidak menyalin aset atau source frontend SITREP. Lihat [laporan reverse engineering](docs/REVERSE_ENGINEERING.md) untuk bukti pengamatan, asumsi, dan perbedaan implementasi.
+PANTAU adalah aplikasi yang dikembangkan secara mandiri untuk memantau informasi publik di Indonesia. PANTAU menghubungkan laporan terkini dengan konteks wilayah dan lingkungan, disertai sumber, waktu pembaruan, serta keterangan ketelitian data agar informasi mudah ditelusuri dan dipahami.
 
 ## Menjalankan
 
@@ -47,7 +47,7 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 
 ## Konteks lingkungan — v0.1.2
 
-PANTAU kini menggabungkan laporan terkini dengan konteks lingkungan dari sumber yang ditemukan saat mempelajari Mandum Rimba. Buka panel **Lapisan lingkungan** pada peta:
+PANTAU menggabungkan laporan terkini dengan data lingkungan dari penyedia primer. Buka panel **Lapisan lingkungan** pada peta:
 
 - Kehilangan tutupan pohon UMD/GFW, kumulatif 2001–tahun pilihan (hingga 2025).
 - Citra harian NASA MODIS Terra dan gambar hotspot arsip VIIRS NOAA-20, dengan tanggal UTC.
@@ -57,7 +57,7 @@ PANTAU kini menggabungkan laporan terkini dengan konteks lingkungan dari sumber 
 - Adapter opsional konsesi sawit/HTI/logging, jejak lahan tambang, dan moratorium via `GFW_API_KEY` milik operator. Versi awal dibatasi 100 fitur dengan penanda sampel.
 - Impor GeoJSON operator untuk mangrove, gambut, DAS, dan banjir/longsor historis. Belum ada data berkas yang dibundel atau dianggap terkonfigurasi.
 
-Lihat [inventaris sumber, perbandingan tampilan, dan panduan integrasi](docs/MANDUM_RIMBA.md). **Raster/arsip konteks tidak dicampur ke hitungan kejadian terbaru atau ekspor laporan GeoJSON.** Sumber yang dibatasi lisensi (WDPA, GADM, poligon IUCN) tetap berupa referensi; Trase dikecualikan karena kebijakan topik ekonomi. Implementasi ditulis mandiri, tanpa menyalin source/aset AGPL Mandum Rimba.
+Lihat [inventaris sumber, perbandingan tampilan, dan panduan integrasi](docs/MANDUM_RIMBA.md). **Raster/arsip konteks tidak dicampur ke hitungan kejadian terbaru atau ekspor laporan GeoJSON.** Sumber yang dibatasi lisensi (WDPA, GADM, poligon IUCN) tetap berupa referensi; Trase dikecualikan karena kebijakan topik ekonomi.
 
 ## Batasan topik
 
@@ -79,7 +79,7 @@ Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah ter
 | X / Threads   | Feed RSS berizin dari operator   | Belum dikonfigurasi; tidak ada scraping atau bypass login                                         |
 | CCTV          | URL publik berizin dari operator | Belum dikonfigurasi; streaming end-to-end belum diuji                                             |
 
-Sumber yang gagal tetap ditampilkan sebagai gagal. Server tidak menggunakan API, token, atau proxy milik SITREP. Jangan menganggap `HTTP 200` pada `/api/situation` berarti seluruh sumber berhasil; selalu periksa `sources[].status`.
+Sumber yang gagal tetap ditampilkan sebagai gagal. Data diambil dari penyedia sumber dengan konfigurasi akses masing-masing. Jangan menganggap `HTTP 200` pada `/api/situation` berarti seluruh sumber berhasil; selalu periksa `sources[].status`.
 
 **Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, X/Threads API langsung, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
 
@@ -142,12 +142,12 @@ shared/       Kontrak data frontend/backend
 config/       Contoh konfigurasi sumber opsional
 tests/        Pengujian regresi tanpa upstream eksternal
 scripts/      Smoke test upstream dan HTTP
-docs/         Laporan rekonstruksi dan keputusan arsitektur
+docs/         Riset sumber data dan keputusan arsitektur
 ```
 
 ## Lisensi dan atribusi
 
-Kode baru dalam repositori ini berlisensi MIT. Lisensi tersebut tidak memberi hak atas konten berita, data pihak ketiga, video CCTV, merek SITREP, atau aset penyedia. Ikuti ketentuan masing-masing sumber sebelum memakai instans secara publik atau komersial.
+Kode PANTAU dalam repositori ini berlisensi MIT. Lisensi tersebut tidak memberi hak atas konten berita, data pihak ketiga, video CCTV, merek, atau aset penyedia. Ikuti ketentuan masing-masing sumber sebelum memakai instans secara publik atau komersial.
 
 - [BMKG Data Terbuka](https://data.bmkg.go.id/) — gempa dan atribusi BMKG.
 - [Open-Meteo](https://open-meteo.com/) — periksa lisensi data dan persyaratan API, termasuk penggunaan komersial.
@@ -157,3 +157,13 @@ Kode baru dalam repositori ini berlisensi MIT. Lisensi tersebut tidak memberi ha
 - [Leaflet](https://leafletjs.com/), [hls.js](https://github.com/video-dev/hls.js/) — pustaka frontend dengan lisensi masing-masing.
 
 Font Google dimuat dari layanan Google Fonts. Peta, font, dan stream opsional memerlukan jaringan browser ke penyedia masing-masing. Siapkan penyedia tile dan font lokal sendiri bila kebutuhan privasi, offline, atau skala memerlukannya.
+
+
+## Referensi
+
+Pengembangan PANTAU menggunakan dua proyek berikut sebagai referensi untuk mempelajari pendekatan pemantauan informasi publik, penyajian peta, dan penelusuran sumber data:
+
+- [SITREP Indonesia](https://sitrep-production.up.railway.app/) — referensi pemantauan situasi, penggabungan laporan, dan penyajian informasi geografis.
+- [Mandum Rimba](https://github.com/ammar-rasyidi/mandum-rimba) — referensi penyajian konteks lingkungan, lapisan peta, dan keterbukaan sumber data.
+
+Catatan riset tersedia dalam [kajian pemantauan situasi](docs/REVERSE_ENGINEERING.md) dan [kajian data lingkungan](docs/MANDUM_RIMBA.md).
