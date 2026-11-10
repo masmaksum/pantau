@@ -101,7 +101,7 @@ SQLite memakai WAL, `synchronous=FULL`, transaksi, dan `busy_timeout`. Satu file
 
 ## Membaca dan mengekspor
 
-Tombol **Arsip berita** pada navigasi membuka pencarian berdasarkan:
+Subtab **Kanal Berita → Arsip** membuka pencarian berdasarkan:
 
 - Judul/ringkasan awal dan teks artikel yang sudah berhasil diekstrak (termasuk snapshot pengambilan sebelumnya).
 - Kanal sumber.
@@ -121,6 +121,7 @@ Seluruh endpoint mengikuti `PANTAU_API_TOKEN` yang sama dengan API lainnya. Tida
 | ------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `GET /api/archive/status`                               | Jumlah artikel/revisi, kanal/kategori tersimpan, dan status penyimpanan     |
 | `GET /api/archive`                                      | Daftar snapshot awal dengan pagination                                      |
+| `GET /api/archive/lookup?source=...&url=...`            | ID catatan dari kanal dan URL kanonis, tanpa mengambil URL dari jaringan    |
 | `GET /api/archive/:id`                                  | Snapshot awal, riwayat RSS, `preservation.jobs` dan `preservation.captures` |
 | `GET /api/archive/:id/captures/:captureId/assets/:hash` | File foto atau unduhan HTML sumber milik snapshot tersebut                  |
 | `GET /api/archive/policies/:fingerprint`                | Snapshot kode kriteria yang benar-benar dipakai                             |

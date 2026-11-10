@@ -1,15 +1,19 @@
 import L from "leaflet";
+import { dashboardLayout } from "./layout.js";
+import { mountNavigation } from "./navigation.js";
 import { mountNewsArchive } from "./archive-ui.js";
 import { mountEnvironment } from "./environment-ui.js";
 import { mountOfficialSocial } from "./social-ui.js";
 import type Hls from "hls.js";
-import {
-  isAllowedReport,
-  visibleCategories,
-  applyTopicPolicy,
-} from "../shared/topic-policy.js";
+import { isAllowedReport, visibleCategories } from "../shared/topic-policy.js";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
+import "./workspace.css";
+import {
+  filterReports,
+  newsReports,
+  newsSources,
+} from "../shared/report-view.js";
 import type {
   Camera,
   Category,
@@ -79,47 +83,15 @@ const age = (raw: string | null) => {
       : `${Math.floor(min / 60)} jam`;
 };
 
-document.querySelector("#app")!.innerHTML = `
-<header class="masthead">
-  <a class="wordmark" href="/" aria-label="PANTAU beranda"><span class="brand-symbol">◉</span> PANTAU<span class="brand-dot">.</span></a>
-  <div class="brand-note">RUANG PANTAU INDONESIA<span>Informasi terbuka, dalam konteks.</span></div>
-  <div class="header-right"><span class="edition">EDISI 001 / OPEN INTELLIGENCE</span><time id="clock"></time><button id="access" class="icon-button" title="Atur koneksi API" aria-label="Atur koneksi API">⚙</button></div>
-</header>
-<nav class="topbar" aria-label="Navigasi utama"><div class="tab active">01 <span>Situasi nasional</span></div><a class="tab" href="#channels">02 <span>Kanal & sumber</span></a><div class="topbar-end"><span class="pulse"></span><span id="sync-label">MENGAMBIL DATA</span><button id="refresh" class="text-button">↻ Sinkronkan</button></div></nav>
-<main>
-  <section class="intro"><div><div class="eyebrow">KEWASPADAAN SITUASIONAL / SUMBER TERBUKA</div><h1>Indonesia, dalam satu pandangan.</h1><p>Ikuti kejadian. Pahami lokasinya. Telusuri sumbernya.</p></div><div class="intro-stamp"><span>WILAYAH PEMANTAUAN</span><strong>94°—142° BT</strong><small>6° LU — 11° LS</small></div></section>
-  <div id="notice" class="notice" role="status" hidden></div>
-  <section class="dashboard" aria-label="Dashboard situasi">
-    <aside class="sidebar">
-      <div class="panel-title"><span>01 / IKHTISAR</span><span class="small-tag">INDONESIA</span></div>
-      <div class="metrics"><div><strong id="count-events">—</strong><span>Laporan</span></div><div><strong id="count-located">—</strong><span>Dengan lokasi</span></div><div><strong id="count-sources">—</strong><span>Sumber aktif</span></div><div><strong id="count-regions">—</strong><span>Lokasi berbeda</span></div></div>
-      <p class="metric-note">Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan. Laporan HAM diprioritaskan.</p>
-      <div class="side-section"><div class="panel-title"><span>CUACA LOKAL</span><span class="small-tag">MODEL</span></div><label class="sr-only" for="city">Kota cuaca</label><select id="city"><option value="jakarta">Jakarta</option></select><div id="weather" class="weather"><p class="muted">Mengambil prakiraan…</p></div></div>
-      <div class="side-section source-section"><div class="panel-title"><span>KESEHATAN SUMBER</span><span id="health-count">—</span></div><div id="sources"><p class="muted">Menghubungkan sumber…</p></div></div>
-      <div class="side-foot"><span class="compass">↗</span><p>Data membantu orientasi.<br>Konfirmasi sebelum bertindak.</p></div>
-    </aside>
-    <section class="map-panel" aria-label="Peta kejadian">
-      <div class="map-top"><div><span class="eyebrow">02 / PETA SITUASI</span><h2>Sinyal di lapangan <span id="map-count">—</span></h2></div><button id="reset-map" class="outline-button">↗ Indonesia</button></div>
-      <div class="map-wrap"><div id="map"></div><div class="map-caption">PETA INTERAKTIF <span>GESER · PERBESAR · PILIH TITIK</span></div><div class="map-empty" id="map-empty" hidden>Tidak ada titik untuk filter ini.</div></div>
-      <div class="map-legend"><span><i style="background:#f1a1bd"></i>HAM</span><span><i style="background:#eea761"></i>Gempa</span><span><i style="background:#65b9dd"></i>Banjir</span><span><i style="background:#ed7964"></i>Kebakaran</span><span><i style="background:#bb9cdb"></i>Demo</span><span><i style="background:#a0aca1"></i>Lainnya</span></div>
-      <div class="map-disclaimer"><span>⌖</span><p>Pin berita adalah perkiraan pusat wilayah dari judul. Episentrum dan piksel satelit diberi label tersendiri. Area tanpa titik belum tentu bebas kejadian.</p></div>
-    </section>
-    <section class="wire-panel" aria-label="Daftar laporan">
-      <div class="panel-title wire-heading"><span>03 / LAPORAN TERBARU</span><span id="wire-count">—</span></div>
-      <div class="wire-controls"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Cari kejadian, kota, sumber…" aria-label="Cari laporan" /></label><div class="filter-row"><select id="category" aria-label="Kategori"><option value="all">Semua kategori</option>${visibleCategories
-        .map((k) => `<option value="${k}">${labels[k]}</option>`)
-        .join(
-          "",
-        )}</select><select id="hours" aria-label="Rentang waktu"><option value="6">6 jam</option><option value="24" selected>24 jam</option><option value="72">72 jam</option></select></div><label class="checkbox"><input type="checkbox" id="located-only" /> Hanya laporan dengan lokasi</label></div>
-      <div id="events" class="event-list" aria-live="polite"><div class="loading"><span class="loader"></span>Menghubungkan laporan…</div></div>
-      <div class="wire-footer"><span id="updated">Belum tersinkron</span><button id="export" class="text-button">↓ GeoJSON</button></div>
-    </section>
-  </section>
-  <section class="channels" id="channels"><div class="channel-intro"><div class="eyebrow">04 / KANAL TAMBAHAN</div><h2>Konteks yang lebih dekat.</h2><p>Sumber tambahan untuk melengkapi gambaran situasi.</p></div><article class="channel-card"><div class="panel-title"><span>CCTV REGIONAL</span><span class="small-tag" id="camera-count">KONFIGURASI</span></div><h3>Lihat langsung dari sumber.</h3><div id="cameras"><p class="muted">Memeriksa konfigurasi kamera…</p></div></article><article class="channel-card"><div class="panel-title"><span>TRANSPARANSI DATA</span><span class="small-tag">TERBUKA</span></div><h3>Setiap sinyal punya asal.</h3><p>Berita dari RSS penerbit. Gempa dari BMKG. Cuaca dari Open-Meteo. Hotspot opsional dari NASA FIRMS.</p><p class="muted">Kanal X, Threads, Instagram, Facebook, dan TikTok disiapkan melalui API resmi; seluruh kanal belum mengambil data.</p><button id="show-method" class="text-button">Baca cara kerja ↗</button></article></section>
-  <footer><span class="footer-brand">PANTAU<span> / </span>BUILT FOR CONTEXT.</span><span>Pembaruan 120 detik · Waktu WIB · Implementasi mandiri</span></footer>
-</main>
+document.querySelector("#app")!.innerHTML =
+  dashboardLayout(
+    visibleCategories
+      .map((k) => `<option value="${k}">${labels[k]}</option>`)
+      .join(""),
+  ) +
+  `
 <dialog id="detail"><button class="dialog-close" data-close="detail" aria-label="Tutup detail">×</button><div id="detail-content"></div></dialog>
-<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Laporan tentang kekerasan aparat, represi aktivis, kekerasan ormas, persekusi, dan hak asasi lainnya diprioritaskan meskipun memuat istilah topik yang dikecualikan. Label HAM adalah klasifikasi topik, bukan temuan hukum; dugaan dan bantahan tetap mengikuti sumber. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Collector dan koneksi akun media sosial melalui API resmi belum diaktifkan. Fitur pasar, AIS, ADS-B, MAGMA, pembaca artikel lengkap, dan analisis AI belum tersedia.</p></dialog>
+<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Laporan tentang kekerasan aparat, represi aktivis, kekerasan ormas, persekusi, dan hak asasi lainnya diprioritaskan meskipun memuat istilah topik yang dikecualikan. Label HAM adalah klasifikasi topik, bukan temuan hukum; dugaan dan bantahan tetap mengikuti sumber. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Collector dan koneksi akun media sosial melalui API resmi belum diaktifkan. Fitur pasar, AIS, ADS-B, MAGMA, dan analisis AI belum tersedia. Artikel lengkap, foto, dan caption yang berhasil dipreservasi tersedia pada Kanal Berita → Arsip.</p></dialog>
 <dialog id="connection"><button class="dialog-close" data-close="connection" aria-label="Tutup pengaturan">×</button><div class="eyebrow">KONEKSI</div><h2>Token akses instans</h2><p>Isi hanya bila operator mengaktifkan PANTAU_API_TOKEN. Token disimpan pada sesi tab ini.</p><form id="token-form"><input type="password" id="api-token" placeholder="Token akses" aria-label="Token akses" autocomplete="off" /><button class="solid-button" type="submit">Simpan & hubungkan</button></form></dialog>
 <dialog id="camera-dialog"><button class="dialog-close" data-close="camera-dialog" aria-label="Tutup kamera">×</button><h2 id="camera-name"></h2><video id="camera-video" controls playsinline></video><p id="camera-message" role="status"></p></dialog>
 <div id="toast" role="status" hidden></div>`;
@@ -165,9 +137,24 @@ L.control
   .addTo(map);
 const environment = mountEnvironment(map, api, fmtTime);
 const officialSocial = mountOfficialSocial(api);
-mountNewsArchive(api, fmtTime, labels, map, apiBlob);
+const archive = mountNewsArchive(
+  api,
+  fmtTime,
+  labels,
+  map,
+  apiBlob,
+  () => navigation.go("peta"),
+  () => render(),
+);
+const navigation = mountNavigation((view, news) => {
+  if (view === "peta") requestAnimationFrame(() => map.invalidateSize());
+  if (view === "berita" && news === "arsip") archive.activate();
+});
 const markers = L.layerGroup().addTo(map);
 const markerIndex = new Map<string, L.CircleMarker>();
+const cameraMarkers = L.layerGroup();
+let focusedReportMarker: L.CircleMarker | null = null;
+let configuredCameras: Camera[] = [];
 let snapshot: Snapshot | null = null;
 let filtered: Event[] = [];
 let hls: Hls | null = null;
@@ -228,23 +215,18 @@ function renderSources() {
 }
 function render() {
   if (!snapshot) return;
-  const search = $<HTMLInputElement>("search").value.toLocaleLowerCase("id");
-  const category = $<HTMLSelectElement>("category").value;
-  const onlyLocated = $<HTMLInputElement>("located-only").checked;
-  const windowStart =
-    Date.now() - Number($<HTMLSelectElement>("hours").value) * 3_600_000;
-  filtered = snapshot.events
-    .map(applyTopicPolicy)
-    .filter(isAllowedReport)
-    .filter(
-      (e) =>
-        Date.parse(e.publishedAt ?? "") >= windowStart &&
-        (category === "all" || e.category === category) &&
-        (!onlyLocated || !!e.location) &&
-        `${e.title} ${e.source} ${e.location?.name ?? ""}`
-          .toLocaleLowerCase("id")
-          .includes(search),
-    );
+  filtered = filterReports(snapshot.events, {
+    hours: Number($<HTMLSelectElement>("map-hours").value),
+    category: $<HTMLSelectElement>("map-category").value,
+    region: $<HTMLSelectElement>("map-region").value,
+  });
+  const reports = filterReports(newsReports(snapshot), {
+    hours: Number($<HTMLSelectElement>("hours").value),
+    category: $<HTMLSelectElement>("category").value,
+    source: $<HTMLSelectElement>("news-source").value,
+    located: $<HTMLInputElement>("located-only").checked,
+    search: $<HTMLInputElement>("search").value,
+  });
   const located = filtered.filter((e) => e.location);
   $("count-events").textContent = String(filtered.length);
   $("count-located").textContent = String(located.length);
@@ -255,8 +237,13 @@ function render() {
     new Set(located.map((e) => e.location!.name)).size,
   );
   $("map-count").textContent = `${located.length} titik`;
-  $("wire-count").textContent = String(filtered.length);
-  $("map-empty").hidden = located.length > 0;
+  $("wire-count").textContent = `${reports.length} berita`;
+  renderOverview();
+  $("map-empty").hidden =
+    located.length > 0 ||
+    !!focusedReportMarker ||
+    archive.hasMapMarker() ||
+    (cameraMarkers.getLayers().length > 0 && map.hasLayer(cameraMarkers));
   markers.clearLayers();
   markerIndex.clear();
   // Larger/selected markers stay on top. Coincident approximate locations share a popup list.
@@ -296,8 +283,8 @@ function render() {
     marker.bindPopup(popup, { maxWidth: 320 });
     for (const entry of group) markerIndex.set(entry.id, marker);
   }
-  $("events").innerHTML = filtered.length
-    ? filtered
+  $("events").innerHTML = reports.length
+    ? reports
         .map(
           (e) =>
             `<article class="event-card" style="--event-color:${colors[e.category]}"><div class="event-meta"><span class="category-label">${labels[e.category]}</span><time title="${esc(fmtTime(e.publishedAt))}">${esc(age(e.publishedAt))}</time></div><button class="event-title" data-event="${e.id}">${esc(e.title)}</button><div class="event-bottom"><span>${esc(e.source)}</span><span class="location-label">⌖ ${esc(e.location?.name ?? "Belum terpetakan")}</span></div></article>`,
@@ -309,15 +296,76 @@ function render() {
     .forEach(
       (b) =>
         (b.onclick = () => {
-          const e = filtered.find((e) => e.id === b.dataset.event)!;
+          const e = reports.find((e) => e.id === b.dataset.event)!;
           showDetail(e);
-          if (e.location) {
-            map.flyTo([e.location.lat, e.location.lon], 8);
-            markerIndex.get(e.id)?.openPopup();
-          }
         }),
     );
   $("updated").textContent = `Diambil ${fmtTime(snapshot.generatedAt)}`;
+}
+function updateFilterOptions() {
+  if (!snapshot) return;
+  const region = $<HTMLSelectElement>("map-region"),
+    oldRegion = region.value;
+  region.innerHTML =
+    '<option value="all">Semua wilayah</option>' +
+    [
+      ...new Set(
+        snapshot.events
+          .filter(isAllowedReport)
+          .flatMap((e) => (e.location ? [e.location.name] : [])),
+      ),
+    ]
+      .sort()
+      .map((name) => `<option value="${esc(name)}">${esc(name)}</option>`)
+      .join("");
+  region.value = [...region.options].some((o) => o.value === oldRegion)
+    ? oldRegion
+    : "all";
+  const source = $<HTMLSelectElement>("news-source"),
+    oldSource = source.value;
+  source.innerHTML =
+    '<option value="all">Semua penerbit</option>' +
+    newsSources(snapshot)
+      .map((s) => `<option value="${esc(s.name)}">${esc(s.name)}</option>`)
+      .join("");
+  source.value = [...source.options].some((o) => o.value === oldSource)
+    ? oldSource
+    : "all";
+}
+function renderOverview() {
+  const topics = new Map<Category, number>();
+  for (const event of filtered)
+    topics.set(event.category, (topics.get(event.category) ?? 0) + 1);
+  $("summary-window").textContent =
+    `${$<HTMLSelectElement>("map-hours").value} JAM`;
+  $("topic-summary").innerHTML =
+    [...topics]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(
+        ([category, count]) =>
+          `<div class="topic-row"><span>${labels[category]}</span><strong>${count}</strong></div>`,
+      )
+      .join("") || '<p class="muted">Belum ada laporan sesuai filter.</p>';
+  $("highlights").innerHTML =
+    [...filtered]
+      .sort(
+        (a, b) =>
+          Date.parse(b.publishedAt ?? "") - Date.parse(a.publishedAt ?? ""),
+      )
+      .slice(0, 3)
+      .map(
+        (e) =>
+          `<article class="highlight"><small>${esc(labels[e.category])} · ${esc(age(e.publishedAt))}</small><button class="event-title" data-highlight="${e.id}">${esc(e.title)}</button><small>${esc(e.source)} · ${esc(e.location?.name ?? "Lokasi belum diketahui")}</small></article>`,
+      )
+      .join("") || '<p class="muted">Tidak ada sorotan untuk filter ini.</p>';
+  $("highlights")
+    .querySelectorAll<HTMLButtonElement>("[data-highlight]")
+    .forEach(
+      (b) =>
+        (b.onclick = () =>
+          showDetail(filtered.find((e) => e.id === b.dataset.highlight)!)),
+    );
 }
 function showDetail(e: Event) {
   const stale = snapshot?.sources.some(
@@ -327,6 +375,78 @@ function showDetail(e: Event) {
   );
   $("detail-content").innerHTML =
     `<div class="eyebrow" style="color:${colors[e.category]}">${labels[e.category]} / ${esc(e.source)}</div><h2>${esc(e.title)}</h2>${e.category.startsWith("ham-") ? '<p class="muted">Pemantauan topik HAM; klasifikasi ini bukan verifikasi tuduhan atau putusan pelanggaran. Baca dugaan, bantahan, dan konteks dalam sumber asli.</p>' : ""}<p>${esc(e.summary || "Ringkasan tidak tersedia. Baca laporan asli melalui tautan sumber.")}</p><dl><dt>Publikasi</dt><dd>${esc(fmtTime(e.publishedAt))}</dd><dt>Pertama dibaca dalam pengambilan ini</dt><dd>${esc(fmtTime(e.observedAt))}</dd><dt>Lokasi</dt><dd>${esc(e.location?.name ?? "Tidak diketahui")}</dd><dt>Ketelitian lokasi</dt><dd>${esc(precisionText(e))}</dd><dt>Status informasi</dt><dd>${e.verification === "official" ? "Data sumber resmi" : e.verification === "sensor" ? "Deteksi sensor, perlu interpretasi" : "Laporan penerbit, belum diverifikasi PANTAU"}${stale ? " · cache sumber lama" : ""}</dd>${e.confidence ? `<dt>Confidence sensor</dt><dd>${esc(e.confidence)}</dd>` : ""}</dl><a class="solid-button" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">Baca di sumber asli ↗</a>`;
+  const source = snapshot
+    ? newsSources(snapshot).find((s) => s.name === e.source)
+    : undefined;
+  const actions = document.createElement("div");
+  actions.className = "layer-actions";
+  if (source) {
+    const read = document.createElement("button");
+    read.className = "solid-button";
+    read.textContent = "Teks lengkap, foto & arsip →";
+    read.onclick = () => {
+      $<HTMLDialogElement>("detail").close();
+      navigation.go("berita", "arsip");
+      void archive
+        .openReport(source.id, e.url)
+        .catch(() =>
+          notify(
+            "Artikel belum tersedia di arsip. Periksa status pengambilan sumber.",
+          ),
+        );
+    };
+    actions.append(read);
+  }
+  if (e.location) {
+    const locate = document.createElement("button");
+    locate.className = "outline-button";
+    locate.textContent = "Lihat di peta";
+    locate.onclick = () => {
+      $<HTMLDialogElement>("detail").close();
+      navigation.go("peta");
+      requestAnimationFrame(() => {
+        map.invalidateSize();
+        if (focusedReportMarker) {
+          map.removeLayer(focusedReportMarker);
+          focusedReportMarker = null;
+        }
+        map.flyTo([e.location!.lat, e.location!.lon], 8);
+        const currentMarker = markerIndex.get(e.id);
+        if (currentMarker) currentMarker.openPopup();
+        else {
+          const popup = document.createElement("div"),
+            title = document.createElement("strong"),
+            description = document.createElement("p");
+          title.textContent = `LOKASI PILIHAN · ${e.title}`;
+          description.textContent = `${precisionText(e)}. Titik pilihan ini berada di luar filter peta dan tidak masuk hitungan laporan sesuai filter.`;
+          const remove = document.createElement("button");
+          remove.className = "text-button";
+          remove.textContent = "Hapus titik pilihan";
+          remove.onclick = () => {
+            if (focusedReportMarker) map.removeLayer(focusedReportMarker);
+            focusedReportMarker = null;
+            render();
+          };
+          popup.append(title, description, remove);
+          focusedReportMarker = L.circleMarker(
+            [e.location!.lat, e.location!.lon],
+            {
+              radius: 10,
+              weight: 3,
+              color: colors[e.category],
+              dashArray: "4 4",
+            },
+          )
+            .addTo(map)
+            .bindPopup(popup)
+            .openPopup();
+        }
+        $("map-empty").hidden = true;
+      });
+    };
+    actions.append(locate);
+  }
+  $("detail-content").append(actions);
   $<HTMLDialogElement>("detail").showModal();
 }
 async function refresh() {
@@ -337,7 +457,7 @@ async function refresh() {
   $("sync-label").textContent = "SINKRONISASI";
   try {
     const data = await api<Snapshot>(
-      `/api/situation?hours=${$<HTMLSelectElement>("hours").value}`,
+      `/api/situation?hours=72`,
       controller.signal,
     );
     if (controller !== snapshotController) return;
@@ -345,6 +465,7 @@ async function refresh() {
     countdown = 120;
     lastRequestFailed = false;
     renderSources();
+    updateFilterOptions();
     render();
     const failed = data.sources.filter(
       (s) => s.status === "error" || s.status === "stale",
@@ -384,7 +505,12 @@ async function weather() {
     }>(
       `/api/weather?city=${encodeURIComponent($<HTMLSelectElement>("city").value)}`,
     );
-    if (seq !== weatherSequence || !data.value) return;
+    if (seq !== weatherSequence) return;
+    if (!data.value) {
+      $("weather").textContent =
+        "Prakiraan belum tersedia dari sumber. Coba sinkronkan kembali.";
+      return;
+    }
     const w = data.value;
     $("weather").innerHTML =
       `<div class="temperature">${Math.round(w.temperature)}<span>°C</span><span class="weather-symbol">${w.precipitation > 0 ? "☂" : w.code <= 1 ? "☀" : "☁"}</span></div><div class="weather-readings"><span>Hujan <b>${w.precipitation} mm</b></span><span>Angin <b>${w.wind} km/j</b></span></div><div class="forecast">${w.daily.map((d) => `<div><span>${new Intl.DateTimeFormat("id-ID", { weekday: "short", timeZone: "Asia/Jakarta" }).format(new Date(d.date + "T12:00:00+07:00"))}</span><strong>${Math.round(d.max)}°<small> / ${Math.round(d.min)}°</small></strong><span>☂ ${d.rain}%</span></div>`).join("")}</div><small class="weather-credit">Open-Meteo · ${data.status === "stale" ? "DATA LAMA · " : ""}${esc(fmtTime(w.fetchedAt))}<br>Waktu model: ${esc(fmtTime(w.time))}</small>`;
@@ -394,67 +520,131 @@ async function weather() {
         '<p class="muted">Prakiraan tidak tersedia. Sumber gagal diakses.</p>';
   }
 }
+async function openCamera(c: Camera) {
+  const seq = ++cameraSequence;
+  const video = $<HTMLVideoElement>("camera-video");
+  hls?.destroy();
+  $("camera-name").textContent = c.name;
+  $("camera-message").textContent = "Memuat stream dari sumber…";
+  $<HTMLDialogElement>("camera-dialog").showModal();
+  video.onloadeddata = () =>
+    ($("camera-message").textContent =
+      "Stream tersedia. Tekan putar untuk menonton.");
+  video.onerror = () =>
+    ($("camera-message").textContent =
+      "Stream tidak tersedia atau akses ditolak sumber.");
+  if (video.canPlayType("application/vnd.apple.mpegurl")) video.src = c.url;
+  else {
+    try {
+      const { default: HlsPlayer } = await import("hls.js");
+      if (seq !== cameraSequence || !$<HTMLDialogElement>("camera-dialog").open)
+        return;
+      if (HlsPlayer.isSupported()) {
+        hls = new HlsPlayer();
+        hls.loadSource(c.url);
+        hls.attachMedia(video);
+        hls.on(HlsPlayer.Events.ERROR, (_event, data) => {
+          if (data.fatal)
+            $("camera-message").textContent =
+              "Stream tidak tersedia; periksa izin, CORS, dan alamat sumber.";
+        });
+      } else
+        $("camera-message").textContent =
+          "Browser ini belum mendukung stream HLS.";
+    } catch {
+      $("camera-message").textContent = "Pemutar kamera gagal dimuat.";
+    }
+  }
+}
+function renderCameras() {
+  cameraMarkers.clearLayers();
+  const toggle = $<HTMLInputElement>("cctv-map-toggle");
+  toggle.disabled = !configuredCameras.some((c) => c.location);
+  if (toggle.disabled) {
+    toggle.checked = false;
+    map.removeLayer(cameraMarkers);
+  }
+  $("cameras").innerHTML = configuredCameras.length
+    ? configuredCameras
+        .map(
+          (c) =>
+            `<div class="camera-row"><div><strong>${esc(c.name)}</strong><small>${esc(c.region)} · ${c.type === "hls" ? "HLS · akses diperiksa saat dibuka" : "Tautan situs kamera"} · ${c.location ? "Koordinat tersedia" : "Belum berkoordinat"}</small></div>${c.type === "hls" ? `<button class="text-button" data-camera="${esc(c.id)}">Buka kamera ↗</button>` : `<a class="text-button" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">Buka situs ↗</a>`}<a href="${esc(c.sourceUrl)}" class="muted" target="_blank" rel="noopener noreferrer">Sumber</a></div>`,
+        )
+        .join("")
+    : '<p class="muted">Belum ada sumber CCTV yang dikonfigurasi. Tidak ada kamera yang dinyatakan aktif.</p>';
+  $("cameras")
+    .querySelectorAll<HTMLButtonElement>("[data-camera]")
+    .forEach(
+      (b) =>
+        (b.onclick = () => {
+          void openCamera(
+            configuredCameras.find((c) => c.id === b.dataset.camera)!,
+          );
+        }),
+    );
+  for (const c of configuredCameras) {
+    if (!c.location) continue;
+    const popup = document.createElement("div"),
+      title = document.createElement("strong"),
+      label = document.createElement("p"),
+      source = document.createElement("a");
+    title.textContent = `CCTV · ${c.name}`;
+    label.textContent = `${c.region} · Koordinat konfigurasi kamera, bukan lokasi kejadian. Akses diperiksa saat dibuka.`;
+    source.href = c.sourceUrl;
+    source.target = "_blank";
+    source.rel = "noopener noreferrer";
+    source.textContent = "Sumber kamera ↗";
+    popup.append(title, label, source);
+    if (c.type === "hls") {
+      const button = document.createElement("button");
+      button.className = "text-button";
+      button.textContent = "Buka kamera";
+      button.onclick = () => {
+        void openCamera(c);
+      };
+      popup.append(button);
+    } else {
+      const link = document.createElement("a");
+      link.href = c.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Buka situs kamera ↗";
+      popup.append(document.createElement("br"), link);
+    }
+    L.marker([c.location.lat, c.location.lon], {
+      icon: L.divIcon({
+        className: "cctv-pin",
+        html: '<span aria-hidden="true">▣</span>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      }),
+      title: `CCTV: ${c.name}`,
+      alt: `CCTV: ${c.name}`,
+    })
+      .addTo(cameraMarkers)
+      .bindPopup(popup);
+  }
+  if ($<HTMLInputElement>("cctv-map-toggle").checked) cameraMarkers.addTo(map);
+}
 async function cameras() {
   try {
-    const d = await api<{ cameras: Camera[]; message: string }>("/api/cameras");
-    $("camera-count").textContent = `${d.cameras.length} SUMBER`;
-    $("cameras").innerHTML = d.cameras.length
-      ? d.cameras
-          .map(
-            (c) =>
-              `<div class="camera-row"><div><strong>${esc(c.name)}</strong><small>${esc(c.region)}</small></div>${c.type === "hls" ? `<button class="text-button" data-camera="${esc(c.id)}">Buka ↗</button>` : `<a class="text-button" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">Buka ↗</a>`}<a href="${esc(c.sourceUrl)}" class="muted" target="_blank" rel="noopener noreferrer" aria-label="Sumber ${esc(c.name)}">Sumber</a></div>`,
-          )
-          .join("")
-      : `<div class="camera-placeholder"><span>▣</span><p>${esc(d.message)}</p></div>`;
-    $("cameras")
-      .querySelectorAll<HTMLButtonElement>("[data-camera]")
-      .forEach(
-        (b) =>
-          (b.onclick = async () => {
-            const seq = ++cameraSequence;
-            const c = d.cameras.find((c) => c.id === b.dataset.camera)!;
-            const video = $<HTMLVideoElement>("camera-video");
-            hls?.destroy();
-            $("camera-name").textContent = c.name;
-            $("camera-message").textContent = "Memuat stream dari sumber…";
-            $<HTMLDialogElement>("camera-dialog").showModal();
-            video.onloadeddata = () =>
-              ($("camera-message").textContent =
-                "Stream tersedia. Tekan putar untuk menonton.");
-            video.onerror = () =>
-              ($("camera-message").textContent =
-                "Stream tidak tersedia atau akses ditolak sumber.");
-            if (video.canPlayType("application/vnd.apple.mpegurl"))
-              video.src = c.url;
-            else {
-              try {
-                const { default: HlsPlayer } = await import("hls.js");
-                if (
-                  seq !== cameraSequence ||
-                  !$<HTMLDialogElement>("camera-dialog").open
-                )
-                  return;
-                if (HlsPlayer.isSupported()) {
-                  hls = new HlsPlayer();
-                  hls.loadSource(c.url);
-                  hls.attachMedia(video);
-                  hls.on(HlsPlayer.Events.ERROR, (_event, data) => {
-                    if (data.fatal)
-                      $("camera-message").textContent =
-                        "Stream tidak tersedia; periksa izin, CORS, dan alamat sumber.";
-                  });
-                } else
-                  $("camera-message").textContent =
-                    "Browser ini belum mendukung stream HLS.";
-              } catch {
-                $("camera-message").textContent =
-                  "Pemutar kamera gagal dimuat.";
-              }
-            }
-          }),
-      );
+    const d = await api<{ cameras: Camera[]; status: string; message: string }>(
+      "/api/cameras",
+    );
+    configuredCameras = d.cameras;
+    renderCameras();
+    $("camera-count").textContent =
+      `${d.cameras.length} kamera · ${d.cameras.filter((c) => c.location).length} berkoordinat`;
+    if (d.status === "error" || !d.cameras.length)
+      $("cameras").textContent = d.message;
+    render();
   } catch {
-    $("cameras").textContent = "Konfigurasi kamera tidak dapat diambil.";
+    configuredCameras = [];
+    renderCameras();
+    $("camera-count").textContent = "Status belum diketahui";
+    $("cameras").textContent =
+      "Konfigurasi kamera tidak dapat diambil. Ketersediaan belum diketahui.";
+    render();
   }
 }
 async function initializeExtras() {
@@ -481,9 +671,27 @@ async function initializeExtras() {
 $("search").oninput = render;
 $("category").onchange = render;
 $("located-only").onchange = render;
-$("hours").onchange = () => {
-  $("events").setAttribute("aria-busy", "true");
-  void refresh().finally(() => $("events").removeAttribute("aria-busy"));
+$("hours").onchange = render;
+$("news-source").onchange = render;
+for (const id of ["map-category", "map-region", "map-hours"])
+  $(id).onchange = render;
+$("source-health").onclick = () =>
+  $<HTMLDialogElement>("source-dialog").showModal();
+$("open-cctv").onclick = () => {
+  const panel = $<HTMLDetailsElement>("cctv-panel");
+  panel.open = !panel.open;
+  if (panel.open) panel.scrollIntoView({ block: "nearest" });
+};
+$("cctv-panel").addEventListener("toggle", () =>
+  $("open-cctv").setAttribute(
+    "aria-expanded",
+    String($<HTMLDetailsElement>("cctv-panel").open),
+  ),
+);
+$("cctv-map-toggle").onchange = () => {
+  if ($<HTMLInputElement>("cctv-map-toggle").checked) cameraMarkers.addTo(map);
+  else map.removeLayer(cameraMarkers);
+  render();
 };
 $("city").onchange = () => {
   void weather();
@@ -491,10 +699,14 @@ $("city").onchange = () => {
 };
 $("refresh").onclick = () => {
   void refresh();
-  void weather();
+  void initializeExtras();
 };
 $("reset-map").onclick = () => map.flyTo([-2.5, 118], 4);
 $("show-method").onclick = () => $<HTMLDialogElement>("method").showModal();
+$("source-method").onclick = () => {
+  $<HTMLDialogElement>("source-dialog").close();
+  $<HTMLDialogElement>("method").showModal();
+};
 $("access").onclick = () => $<HTMLDialogElement>("connection").showModal();
 $("token-form").onsubmit = (e) => {
   e.preventDefault();

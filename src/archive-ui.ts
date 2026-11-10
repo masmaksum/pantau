@@ -37,26 +37,23 @@ export function mountNewsArchive(
   labels: Record<Category, string>,
   map: L.Map,
   assetApi: (path: string) => Promise<Blob>,
+  showMap: () => void,
+  mapMarkerChanged: () => void,
 ) {
-  const button = document.createElement("button");
-  button.className = "tab archive-tab";
-  button.innerHTML = "03 <span>Arsip berita</span>";
-  document.querySelector(".topbar-end")!.before(button);
-  const dialog = document.createElement("dialog");
-  dialog.id = "archive-dialog";
-  dialog.innerHTML = `<button class="dialog-close" id="close-archive" aria-label="Tutup arsip">×</button><div class="eyebrow">PRESERVASI BERITA / SNAPSHOT SAAT MASUK</div><h2>Berita tetap dapat ditelusuri.</h2><p id="archive-health" role="status">Memeriksa arsip…</p><form id="archive-filter" class="archive-filter"><label>Cari judul / ringkasan / teks arsip<input type="search" id="archive-q" maxlength="200" placeholder="Kata kunci…" /></label><label>Kanal<select id="archive-source"><option value="">Semua kanal</option></select></label><label>Kategori awal<select id="archive-category"><option value="">Semua kategori</option></select></label><label>Lokasi saat masuk<input id="archive-location" maxlength="200" placeholder="Nama wilayah…" /></label><label>Tanggal masuk dari (WIB)<input type="date" id="archive-from" /></label><label>Sampai (WIB)<input type="date" id="archive-to" /></label><label>Ketersediaan lokasi<select id="archive-located"><option value="">Semua</option><option value="yes">Memiliki lokasi</option><option value="no">Lokasi belum diketahui</option></select></label><button class="solid-button" type="submit">Cari arsip</button></form><p class="archive-caption">Filter memakai snapshot awal dan tanggal masuk arsip, bukan waktu publikasi. Perubahan berita tersedia dalam riwayat versi. Lokasi perkiraan tetap diberi label.</p><div id="archive-results"></div><div class="archive-pagination"><button id="archive-prev" class="outline-button" disabled>← Sebelumnya</button><span id="archive-page">—</span><button id="archive-next" class="outline-button" disabled>Berikutnya →</button><button id="archive-export" class="text-button" disabled>↓ Ekspor halaman JSON</button></div>`;
+  const panel = el("news-archive");
+  panel.innerHTML = `<div class="eyebrow">PRESERVASI BERITA / SNAPSHOT SAAT MASUK</div><h2>Berita tetap dapat ditelusuri.</h2><p id="archive-health" role="status">Memeriksa arsip…</p><form id="archive-filter" class="archive-filter"><label>Cari judul / ringkasan / teks arsip<input type="search" id="archive-q" maxlength="200" placeholder="Kata kunci…" /></label><label>Kanal<select id="archive-source"><option value="">Semua kanal</option></select></label><label>Kategori awal<select id="archive-category"><option value="">Semua kategori</option></select></label><label>Lokasi saat masuk<input id="archive-location" maxlength="200" placeholder="Nama wilayah…" /></label><label>Tanggal masuk dari (WIB)<input type="date" id="archive-from" /></label><label>Sampai (WIB)<input type="date" id="archive-to" /></label><label>Ketersediaan lokasi<select id="archive-located"><option value="">Semua</option><option value="yes">Memiliki lokasi</option><option value="no">Lokasi belum diketahui</option></select></label><button class="solid-button" type="submit">Cari arsip</button></form><p class="archive-caption">Filter memakai snapshot awal dan tanggal masuk arsip, bukan waktu publikasi. Perubahan berita tersedia dalam riwayat versi. Lokasi perkiraan tetap diberi label.</p><div id="archive-results"></div><div class="archive-pagination"><button id="archive-prev" class="outline-button" disabled>← Sebelumnya</button><span id="archive-page">—</span><button id="archive-next" class="outline-button" disabled>Berikutnya →</button><button id="archive-export" class="text-button" disabled>↓ Ekspor halaman JSON</button></div>`;
   const detail = document.createElement("dialog");
   detail.id = "archive-detail";
   detail.innerHTML =
     '<button class="dialog-close" id="close-archive-detail" aria-label="Tutup detail arsip">×</button><div id="archive-detail-content"></div>';
-  document.body.append(dialog, detail);
+  // Archive search lives in the news tab; only individual article details are modal.
+  document.body.append(detail);
   let releaseContent = () => {};
   let detailRequest = 0;
   detail.addEventListener("close", () => {
     detailRequest++;
     releaseContent();
   });
-  el("close-archive").onclick = () => dialog.close();
   el("close-archive-detail").onclick = () => detail.close();
   let page: ArchivePage | null = null;
   let offset = 0;
@@ -185,7 +182,7 @@ export function mountNewsArchive(
       if (item.initial.event.location)
         el("archive-map").onclick = () => {
           detail.close();
-          dialog.close();
+          showMap();
           const l = item.initial.event.location!;
           if (marker) map.removeLayer(marker);
           const popup = document.createElement("div");
@@ -198,6 +195,7 @@ export function mountNewsArchive(
           remove.onclick = () => {
             if (marker) map.removeLayer(marker);
             marker = null;
+            mapMarkerChanged();
           };
           popup.append(title, p, remove);
           marker = L.circleMarker([l.lat, l.lon], {
@@ -208,16 +206,18 @@ export function mountNewsArchive(
             .addTo(map)
             .bindPopup(popup)
             .openPopup();
-          map.flyTo([l.lat, l.lon], 8);
+          mapMarkerChanged();
+          requestAnimationFrame(() => {
+            map.invalidateSize();
+            map.flyTo([l.lat, l.lon], 8);
+          });
         };
     } catch {
       if (sequence !== detailRequest) return;
       el("archive-detail-content").textContent = "Detail arsip gagal diambil.";
     }
   }
-  button.onclick = () => {
-    dialog.showModal();
-    offset = 0;
+  const activate = () => {
     void health().catch(() => {
       el("archive-health").textContent =
         "Kesehatan arsip tidak dapat diperiksa.";
@@ -247,5 +247,16 @@ export function mountNewsArchive(
         },
         "pantau-arsip-halaman.json",
       );
+  };
+  return {
+    hasMapMarker: () => !!marker,
+    activate,
+    openDetail,
+    openReport: async (source: string, url: string) => {
+      const result = await api<{ id: string }>(
+        `/api/archive/lookup?${new URLSearchParams({ source, url })}`,
+      );
+      await openDetail(result.id);
+    },
   };
 }

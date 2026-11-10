@@ -266,9 +266,7 @@ export class NewsArchive {
       offset: filter.offset,
     };
   }
-  detail(
-    id: string,
-  ):
+  detail(id: string):
     | (ArchivedArticle & {
         versions: ArchiveVersion[];
         preservation: PreservedArticle;
@@ -288,6 +286,12 @@ export class NewsArchive {
         .all(id)
         .map((r) => JSON.parse(String(r.payload))),
     };
+  }
+  lookupId(sourceId: string, url: string): string | null {
+    const row = this.database
+      .prepare("SELECT id FROM articles WHERE source_id=? AND canonical_url=?")
+      .get(sourceId, canonicalUrl(url));
+    return row ? String(row.id) : null;
   }
   policy(fingerprint: string): PolicySnapshot | null {
     const row = this.database

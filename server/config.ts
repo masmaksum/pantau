@@ -30,6 +30,14 @@ export function isCamera(v: unknown): v is Camera {
     /^[a-z0-9_-]{1,50}$/i.test(c.id) &&
     typeof c.name === "string" &&
     typeof c.region === "string" &&
+    (c.location === undefined ||
+      (!!c.location &&
+        Number.isFinite(c.location.lat) &&
+        Number.isFinite(c.location.lon) &&
+        c.location.lat >= -90 &&
+        c.location.lat <= 90 &&
+        c.location.lon >= -180 &&
+        c.location.lon <= 180)) &&
     ["hls", "link"].includes(c.type) &&
     !!safeUrl(c.url) &&
     c.url.startsWith("https://") &&

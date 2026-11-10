@@ -56,6 +56,30 @@ export function archiveFilter(query: Record<string, unknown>): ArchiveFilter {
 export function archiveRoutes(pipeline: NewsPipeline) {
   const router = Router();
   router.get("/archive/status", (_req, res) => res.json(pipeline.health()));
+  router.get("/archive/lookup", (req, res) => {
+    const { source, url } = req.query;
+    if (
+      typeof source !== "string" ||
+      source.length > 100 ||
+      typeof url !== "string" ||
+      url.length > 4000
+    ) {
+      res.status(400).json({ error: "Identitas sumber/artikel tidak valid" });
+      return;
+    }
+    let id: string | null;
+    try {
+      id = pipeline.archive.lookupId(source, url);
+    } catch {
+      res.status(400).json({ error: "URL artikel tidak valid" });
+      return;
+    }
+    if (!id) {
+      res.status(404).json({ error: "Artikel belum tersedia di arsip" });
+      return;
+    }
+    res.json({ id });
+  });
   router.get("/archive/policies/:fingerprint", (req, res) => {
     if (!/^[a-f0-9]{64}$/.test(String(req.params.fingerprint))) {
       res.status(400).json({ error: "Fingerprint tidak valid" });

@@ -46,11 +46,25 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Konfigurasi CCTV HLS/tautan dan persiapan API resmi X, Threads, Instagram, Facebook, TikTok. Credential kosong; collector sosial belum aktif.
 - Token akses API opsional untuk instans yang memerlukannya.
 
+## Navigasi dashboard — v0.1.7
+
+Tiga kanal di navigasi kiri desktop; pada ponsel navigasi menjadi bilah bawah:
+
+| Kanal                | Isi utama                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Peta & Ringkasan** | Peta, ringkasan laporan, topik/sorotan, serta panel CCTV, cuaca dan lingkungan                               |
+| **Kanal Berita**     | Subtab **Berita terkini** dan **Arsip**, filter sumber/topik, serta teks lengkap/foto/caption yang tersimpan |
+| **Kanal Medsos**     | Pilihan platform serta status integrasi API resmi; seluruh collector masih dorman                            |
+
+Filter peta dan berita berdiri sendiri. Kesehatan sumber serta pengaturan dibuka melalui header. CCTV dengan koordinat konfigurasi dapat ditampilkan sebagai pin tersendiri; kamera tanpa koordinat tetap tersedia di daftar, tanpa menebak lokasi. Belum ada sumber CCTV aktif bawaan.
+
+Detail navigasi, perilaku filter, dan konfigurasi lokasi kamera: [panduan dashboard](docs/DASHBOARD.md).
+
 ## Preservasi berita — v0.1.6
 
 Berita yang lolos dari kanal RSS disimpan sebelum filter tampilan 6/24/72 jam, sehingga tetap tersedia setelah hilang dari RSS atau keluar dari rentang live. Kategori, lokasi, dan snapshot aturan saat masuk dibekukan pada versi awal; perubahan berikutnya disimpan sebagai versi baru. Berita tanpa lokasi tetap disimpan sebagai lokasi belum diketahui.
 
-Buka **Arsip berita** untuk mencari menurut kanal, kategori awal, lokasi, kata kunci, dan tanggal masuk (WIB), melihat riwayat versi, serta mengekspor halaman JSON. Database terpisah dari cache, default `data/news.sqlite` melalui `ARCHIVE_PATH`. Backup lengkap: `npm run archive:backup -- backups/news-YYYY-MM-DD.sqlite`.
+Buka **Kanal Berita → Arsip** untuk mencari menurut kanal, kategori awal, lokasi, kata kunci, dan tanggal masuk (WIB), melihat riwayat versi, serta mengekspor halaman JSON. Database terpisah dari cache, default `data/news.sqlite` melalui `ARCHIVE_PATH`. Backup lengkap: `npm run archive:backup -- backups/news-YYYY-MM-DD.sqlite`.
 
 **Teks lengkap artikel, file foto, caption/kredit, dan HTML sumber** diambil dari halaman publik ANTARA/detik melalui antrean yang berjalan di latar belakang. Detail arsip menampilkan teks dan foto dari salinan lokal, status berhasil/sebagian/gagal, serta unduhan teks, foto, metadata, dan HTML. Antrean lama dilanjutkan setelah restart; arsip v0.1.5 otomatis masuk antrean pengambilan halaman.
 
@@ -98,7 +112,7 @@ Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah ter
 
 Sumber yang gagal tetap ditampilkan sebagai gagal. Data diambil dari penyedia sumber dengan konfigurasi akses masing-masing. Jangan menganggap `HTTP 200` pada `/api/situation` berarti seluruh sumber berhasil; selalu periksa `sources[].status`.
 
-**Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, collector sosial live dan alur OAuth, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
+**Belum diimplementasikan:** ringkasan AI/LLM, collector sosial live dan alur OAuth, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
 
 ## Menambahkan sumber opsional
 
@@ -108,7 +122,7 @@ Daftarkan MAP_KEY sendiri di [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/a
 
 ### Kamera
 
-Salin `config/cameras.example.json` ke `config/cameras.json`, lalu **ganti URL contoh** dengan URL yang operator berhak gunakan. `type: "hls"` memutar stream; `type: "link"` membuka halaman sumber. HLS dimuat langsung browser, sehingga server asal perlu HTTPS dan izin CORS yang sesuai. PANTAU tidak memproksikan video atau melewati pembatasan sumber. Ketersediaan stream ditampilkan setelah pengguna membukanya.
+Salin `config/cameras.example.json` ke `config/cameras.json`, lalu **ganti URL contoh** dengan URL yang operator berhak gunakan. `type: "hls"` memutar stream; `type: "link"` membuka halaman sumber. HLS dimuat langsung browser, sehingga server asal perlu HTTPS dan izin CORS yang sesuai. PANTAU tidak memproksikan video atau melewati pembatasan sumber. Ketersediaan stream ditampilkan setelah pengguna membukanya. Objek opsional `location` dengan `lat` dan `lon` memungkinkan pin CCTV pada peta; tanpa koordinat, kamera hanya masuk daftar. Gunakan koordinat kamera yang diketahui, bukan perkiraan pusat wilayah.
 
 ### Sosial — hanya API resmi
 

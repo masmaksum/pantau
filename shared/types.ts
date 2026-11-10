@@ -73,4 +73,6 @@ export interface Camera {
   url: string;
   sourceUrl: string;
   type: "hls" | "link";
+  /** Operator-supplied camera coordinates; never inferred from the region name. */
+  location?: { lat: number; lon: number };
 }

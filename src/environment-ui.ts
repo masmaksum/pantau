@@ -70,7 +70,7 @@ export function mountEnvironment(
   section.className = "environment-summary";
   section.innerHTML = `<article><div class="panel-title"><span>UDARA & ASAP</span><span class="small-tag">MODEL CAMS</span></div><div id="air-summary"><p class="muted">Mengambil model kualitas udara…</p></div><p class="environment-credit">Sumber: <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener noreferrer">Copernicus CAMS & Open-Meteo ↗</a> · grid sekitar 45 km, bukan pengukuran stasiun.</p></article>
     <article><div class="panel-title"><span>BIODIVERSITAS INDONESIA</span><span class="small-tag">GBIF</span></div><div id="bio-summary"><p class="muted">Mengambil statistik catatan…</p></div><p class="environment-credit">Sumber: <a href="https://www.gbif.org/occurrence/search?country=ID" target="_blank" rel="noopener noreferrer">GBIF ↗</a> · klasifikasi IUCN dalam GBIF. Jumlah catatan, bukan spesies atau populasi; koordinat satwa tidak ditampilkan.</p></article>`;
-  document.querySelector(".channels")!.before(section);
+  document.getElementById("environment-context")!.append(section);
   const dialog = document.createElement("dialog");
   dialog.id = "environment-catalog";
   dialog.innerHTML =

@@ -58,7 +58,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.6" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.7" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");

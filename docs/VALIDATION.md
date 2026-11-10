@@ -92,3 +92,12 @@ Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi 
 - TypeScript dan build produksi berhasil; bundle utama sekitar 204,5 kB, chunk HLS tetap terpisah. Audit dependensi produksi melaporkan nol kerentanan pada saat pemeriksaan.
 - Tool browser bersama `cua_repl.js` tidak tersedia di lingkungan ini. Sesuai alur managed preview, browser QA dilewati; rendering foto/modal, navigasi keyboard, dan unduhan melalui UI belum diverifikasi dalam browser. API, penyimpanan, ekstraksi, dan backup diuji secara terpisah.
 - Pengambilan konten JavaScript, CAPTCHA/login/paywall, video/audio, PDF, WARC, seluruh variasi pagination, skala produksi dan pemulihan volume produksi belum diverifikasi/diimplementasikan. Capture mempunyai timestamp halaman tersendiri dan tidak merekonstruksi isi halaman pada masa sebelum berhasil diambil.
+
+## Pembaruan v0.1.7 — tiga kanal dan CCTV pada peta
+
+- 63 tes lulus, termasuk empat tes baru untuk deep link/keyboard subtab, pemisahan filter dan jenis laporan, validasi koordinat CCTV, serta inisialisasi bundle antarmuka dalam Happy DOM.
+- Tes integrasi DOM memuat Leaflet dan fixture API, berpindah Peta/Berita/Medsos/Arsip, mempertahankan pencarian, membuka panel CCTV, serta menampilkan satu pin dari dua kamera ketika hanya satu mempunyai koordinat. Tidak ada request ke URL kamera sebelum pengguna membuka sumber. Happy DOM/esbuild hanya dependensi pengujian pengembangan.
+- Lookup artikel arsip memakai kanal dan URL kanonis dengan parameter SQL terikat; tes mencakup token akses, penghapusan tracking URL, artikel tidak ditemukan dan URL tidak valid. Endpoint tidak mengambil URL pengunjung dari jaringan.
+- TypeScript dan build produksi berhasil. Bundle utama sekitar 215 kB sebelum gzip; HLS tetap dimuat terpisah. Filter peta/berita dijalankan atas snapshot hingga 72 jam, tanpa mengubah kebijakan topik atau isi arsip.
+- Smoke HTTP live tetap berhasil: ANTARA 39 berita, detik 82, BMKG 15; 123 laporan berada dalam 24 jam dan delapan berlokasi. Arsip metadata berisi 121 artikel/revisi pada database uji sementara. Open-Meteo berhasil. Jumlah upstream berubah mengikuti waktu.
+- Pengujian visual browser, screenshot, tata letak responsif di perangkat nyata, pemutaran CCTV live, serta keterjangkauan sumber CCTV produksi belum dilakukan. Tool browser bersama tidak tersedia; simulasi DOM bukan bukti rendering browser. Kamera pada tes adalah fixture, dan tidak ada sumber CCTV produksi yang diaktifkan.

@@ -299,6 +299,28 @@ test("server-side news polling archives before the live time window and archive 
       )
     ).json();
     assert.equal(page.total, 1);
+    const lookup = `${base}/api/archive/lookup?${new URLSearchParams({ source: "antara", url: "https://news.example/1?utm_source=lookup" })}`;
+    assert.equal((await fetch(lookup)).status, 401);
+    assert.deepEqual(await (await fetch(lookup, { headers })).json(), {
+      id: page.items[0].id,
+    });
+    assert.equal(
+      (
+        await fetch(`${base}/api/archive/lookup?source=antara&url=invalid`, {
+          headers,
+        })
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await fetch(
+          `${base}/api/archive/lookup?source=unknown&url=https://news.example/1`,
+          { headers },
+        )
+      ).status,
+      404,
+    );
     const detail = await (
       await fetch(`${base}/api/archive/${page.items[0].id}`, { headers })
     ).json();
