@@ -1,0 +1,9 @@
+[
+  {
+    "id": "mangrove",
+    "file": "mangrove.geojson",
+    "sourceUrl": "https://www.globalmangrovewatch.org/",
+    "license": "CC BY 4.0; isi atribusi dan versi data yang benar",
+    "vintage": "Ganti dengan tahun data dalam berkas Anda"
+  }
+]

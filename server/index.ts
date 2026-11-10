@@ -9,6 +9,9 @@ const app = createApp({
   firmsKey: process.env.FIRMS_MAP_KEY,
   camerasPath: process.env.CAMERAS_CONFIG,
   socialPath: process.env.SOCIAL_CONFIG,
+  gfwKey: process.env.GFW_API_KEY,
+  contextManifest: process.env.CONTEXT_CONFIG,
+  contextRoot: process.env.CONTEXT_DATA_DIR,
 });
 const server = app.listen(port, process.env.HOST ?? "127.0.0.1", () =>
   console.log(

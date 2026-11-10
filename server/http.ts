@@ -2,7 +2,10 @@ import { EnvHttpProxyAgent, fetch as proxyFetch } from "undici";
 const dispatcher = new EnvHttpProxyAgent();
 const MAX_BYTES = 5 * 1024 * 1024;
 
-export async function download(url: string): Promise<string> {
+export async function download(
+  url: string,
+  headers: Record<string, string> = {},
+): Promise<string> {
   const response = await proxyFetch(url, {
     dispatcher,
     signal: AbortSignal.timeout(15_000),
@@ -10,6 +13,7 @@ export async function download(url: string): Promise<string> {
       "user-agent":
         "PANTAU/0.1 (open-source situational awareness; RSS/API reader)",
       accept: "application/json, application/xml, text/xml, text/csv, */*",
+      ...headers,
     },
     redirect: "error",
   });

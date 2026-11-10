@@ -45,6 +45,20 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Konfigurasi CCTV HLS/tautan dan feed sosial RSS resmi/berizin. Tidak ada kamera atau posting sosial bawaan yang dibuat-buat.
 - Token akses API opsional untuk instans yang memerlukannya.
 
+## Konteks lingkungan — v0.1.2
+
+PANTAU kini menggabungkan laporan terkini dengan konteks lingkungan dari sumber yang ditemukan saat mempelajari Mandum Rimba. Buka panel **Lapisan lingkungan** pada peta:
+
+- Kehilangan tutupan pohon UMD/GFW, kumulatif 2001–tahun pilihan (hingga 2025).
+- Citra harian NASA MODIS Terra dan gambar hotspot arsip VIIRS NOAA-20, dengan tanggal UTC.
+- Model kualitas udara CAMS/Open-Meteo (PM2.5, PM10, US AQI) sesuai kota cuaca.
+- Statistik catatan keberadaan GBIF Indonesia, termasuk kategori ancaman dalam GBIF; bukan jumlah satwa/spesies dan tanpa koordinat satwa.
+- Katalog sumber, tahun, lisensi, batasan, serta tombol memperluas peta.
+- Adapter opsional konsesi sawit/HTI/logging, jejak lahan tambang, dan moratorium via `GFW_API_KEY` milik operator. Versi awal dibatasi 100 fitur dengan penanda sampel.
+- Impor GeoJSON operator untuk mangrove, gambut, DAS, dan banjir/longsor historis. Belum ada data berkas yang dibundel atau dianggap terkonfigurasi.
+
+Lihat [inventaris sumber, perbandingan tampilan, dan panduan integrasi](docs/MANDUM_RIMBA.md). **Raster/arsip konteks tidak dicampur ke hitungan kejadian terbaru atau ekspor laporan GeoJSON.** Sumber yang dibatasi lisensi (WDPA, GADM, poligon IUCN) tetap berupa referensi; Trase dikecualikan karena kebijakan topik ekonomi. Implementasi ditulis mandiri, tanpa menyalin source/aset AGPL Mandum Rimba.
+
 ## Batasan topik
 
 PANTAU tidak menampilkan laporan **kriminal, transportasi, ekonomi, atau selebritis**. Kebijakan ada di `shared/topic-policy.ts`: kata kunci dan padanannya diperiksa pada judul, ringkasan, serta kategori RSS/Atom sebelum hasil ingestion disimpan. Respons API memeriksa ulang cache lama, sehingga laporan lama tidak dapat melewati kebijakan. Penghitungan item sumber mengikuti hasil yang lolos.
@@ -67,7 +81,7 @@ Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah ter
 
 Sumber yang gagal tetap ditampilkan sebagai gagal. Server tidak menggunakan API, token, atau proxy milik SITREP. Jangan menganggap `HTTP 200` pada `/api/situation` berarti seluruh sumber berhasil; selalu periksa `sources[].status`.
 
-**Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, X/Threads API langsung, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta default menunjukkan titik, bukan batas dampak atau luasan kebakaran.
+**Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, X/Threads API langsung, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
 
 ## Menambahkan sumber opsional
 
@@ -96,6 +110,8 @@ Saat sumber gagal, data terakhir tetap memiliki `fetchedAt` lama dan status `sta
 
 ## API
 
+Endpoint lingkungan tambahan: `/api/datasets`, `/api/air-quality?city=jakarta`, `/api/biodiversity`, `/api/context/:id`. Detail di [panduan lingkungan](docs/MANDUM_RIMBA.md).
+
 | Endpoint                        | Isi                                                       |
 | ------------------------------- | --------------------------------------------------------- |
 | `GET /healthz`                  | Kesehatan proses, bukan kesehatan seluruh upstream        |
@@ -112,6 +128,7 @@ Jika `PANTAU_API_TOKEN` diisi, seluruh `/api/*` memerlukan `Authorization: Beare
 npm test           # parser, geolokasi, deduplikasi, cache/failure, kontrol API
 npm run build     # TypeScript dan build produksi
 npm run smoke     # smoke HTTP dengan upstream nyata; memerlukan jaringan dan build
+npm run smoke:environment # CAMS, GBIF, raster GFW/NASA; signature gambar diverifikasi
 ```
 
 Smoke test gagal jika tidak ada sumber live yang berisi data, jika cuaca tidak tersedia, atau frontend hasil build tidak tersaji. Kegagalan BMKG, jika terjadi, tetap dilaporkan sesuai kenyataan. Unit tests tidak membutuhkan jaringan eksternal. Pengujian browser visual belum dilakukan: tool browser bersama tidak tersedia pada lingkungan sesi implementasi. Build dan tes HTTP tidak membuktikan rendering peta atau playback HLS di semua browser.
@@ -136,7 +153,7 @@ Kode baru dalam repositori ini berlisensi MIT. Lisensi tersebut tidak memberi ha
 - [Open-Meteo](https://open-meteo.com/) — periksa lisensi data dan persyaratan API, termasuk penggunaan komersial.
 - [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) — data VIIRS dan interpretasi anomali termal.
 - [ANTARA RSS](https://www.antaranews.com/rss/terkini.xml), [detikNews RSS](https://news.detik.com/berita/rss) — ringkasan feed, tautan penerbit asli.
-- [OpenStreetMap](https://www.openstreetmap.org/copyright), [CARTO](https://carto.com/attributions) — peta dasar dan atribusi yang selalu ditampilkan di peta. Tile publik punya kebijakan penggunaan sendiri.
+- [OpenStreetMap](https://www.openstreetmap.org/copyright), [Esri](https://www.esri.com/en-us/legal/terms/data-attributions) — peta dasar dan atribusi yang selalu ditampilkan di peta. Tile publik punya kebijakan penggunaan sendiri.
 - [Leaflet](https://leafletjs.com/), [hls.js](https://github.com/video-dev/hls.js/) — pustaka frontend dengan lisensi masing-masing.
 
 Font Google dimuat dari layanan Google Fonts. Peta, font, dan stream opsional memerlukan jaringan browser ke penyedia masing-masing. Siapkan penyedia tile dan font lokal sendiri bila kebutuhan privasi, offline, atau skala memerlukannya.

@@ -1,4 +1,5 @@
 import L from "leaflet";
+import { mountEnvironment } from "./environment-ui.js";
 import type Hls from "hls.js";
 import { isAllowedReport, visibleCategories } from "../shared/topic-policy.js";
 import "leaflet/dist/leaflet.css";
@@ -115,14 +116,25 @@ const map = L.map("map", {
   maxZoom: 18,
 });
 L.control.zoom({ position: "bottomright" }).addTo(map);
-const dark = L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    maxZoom: 19,
-  },
-).addTo(map);
+const dark = L.layerGroup([
+  L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    {
+      attribution:
+        "Basemap: &copy; Esri, HERE, Garmin, OpenStreetMap contributors",
+      maxNativeZoom: 16,
+      maxZoom: 18,
+    },
+  ),
+  L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    {
+      pane: "overlayPane",
+      maxNativeZoom: 16,
+      maxZoom: 18,
+    },
+  ),
+]).addTo(map);
 const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution:
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -130,11 +142,12 @@ const street = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
 });
 L.control
   .layers(
-    { "Gelap · CARTO": dark, "Jalan · OSM": street },
+    { "Gelap · Esri": dark, "Jalan · OSM": street },
     {},
     { position: "topright" },
   )
   .addTo(map);
+const environment = mountEnvironment(map, api, fmtTime);
 const markers = L.layerGroup().addTo(map);
 const markerIndex = new Map<string, L.CircleMarker>();
 let snapshot: Snapshot | null = null;
@@ -428,7 +441,11 @@ async function initializeExtras() {
   } catch {
     /* Jakarta remains available. */
   }
-  await Promise.all([weather(), cameras()]);
+  await Promise.all([
+    weather(),
+    cameras(),
+    environment.refresh($<HTMLSelectElement>("city").value),
+  ]);
 }
 $("search").oninput = render;
 $("category").onchange = render;
@@ -437,7 +454,10 @@ $("hours").onchange = () => {
   $("events").setAttribute("aria-busy", "true");
   void refresh().finally(() => $("events").removeAttribute("aria-busy"));
 };
-$("city").onchange = weather;
+$("city").onchange = () => {
+  void weather();
+  void environment.air($<HTMLSelectElement>("city").value);
+};
 $("refresh").onclick = () => {
   void refresh();
   void weather();
@@ -528,6 +548,9 @@ function tick() {
 new ResizeObserver(() => map.invalidateSize()).observe($("map"));
 tick();
 setInterval(tick, 1000);
-setInterval(() => void weather(), 600_000);
+setInterval(() => {
+  void weather();
+  void environment.air($<HTMLSelectElement>("city").value);
+}, 600_000);
 void refresh();
 void initializeExtras();

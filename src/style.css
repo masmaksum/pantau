@@ -1451,3 +1451,235 @@ dd {
     scroll-behavior: auto !important;
   }
 }
+
+/* Environmental context: independent layers, dates and provenance. */
+.environment-controls {
+  padding: 0 20px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #172119;
+}
+.environment-controls summary {
+  cursor: pointer;
+  padding: 14px 0 0;
+  color: var(--acid);
+  font: 10px var(--mono);
+  list-style-position: inside;
+}
+.environment-controls summary small {
+  display: block;
+  margin: 8px 0 0 14px;
+  color: var(--muted);
+  font:
+    10px "DM Sans",
+    sans-serif;
+}
+.layer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.layer-grid label {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.layer-grid input {
+  accent-color: var(--acid);
+  margin: 3px 0 0;
+}
+.layer-grid input:disabled + span {
+  opacity: 0.5;
+}
+.layer-grid small {
+  display: block;
+  font-size: 8px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.layer-settings {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.layer-settings label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 9px;
+  color: var(--muted);
+}
+.layer-settings select,
+.layer-settings input {
+  background: #1b291e;
+  color: #d6e1cb;
+  border: 1px solid #3e4b38;
+  padding: 6px;
+  font-size: 10px;
+  border-radius: 3px;
+  min-width: 0;
+}
+.layer-status {
+  border-top: 1px solid var(--line);
+  margin-top: 14px;
+  padding-top: 12px;
+  color: #bdcda9;
+  font: 9px/1.7 var(--mono);
+}
+.layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+.layer-actions .text-button {
+  font-size: 9px;
+}
+.layer-caution {
+  color: #92a080;
+  font-size: 9px;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.environment-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 26px;
+}
+.environment-summary > article {
+  background: #151e18;
+  border: 1px solid var(--line);
+  padding: 22px;
+  min-width: 0;
+}
+.environment-city {
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 17px;
+  font-weight: 400;
+  margin: 20px 0 15px;
+}
+.environment-city small {
+  color: #9fad91;
+  font: 9px var(--mono);
+}
+.environment-values {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.environment-values > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.environment-values strong {
+  color: var(--acid);
+  font: 26px var(--mono);
+  letter-spacing: -1px;
+}
+.environment-values span {
+  color: #a6b49a;
+  font-size: 10px;
+}
+.environment-credit,
+.model-time {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #91a180;
+}
+.environment-credit {
+  border-top: 1px solid var(--line);
+  margin: 15px 0 0;
+  padding-top: 12px;
+}
+.environment-credit a {
+  color: #bfcca9;
+}
+#environment-catalog {
+  max-width: 900px;
+}
+#catalog-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.dataset-card {
+  border: 1px solid #3a4932;
+  padding: 16px;
+  min-width: 0;
+}
+.dataset-card .panel-title {
+  display: block;
+  font-size: 8px;
+  line-height: 1.7;
+}
+.dataset-card .small-tag {
+  display: block;
+  width: fit-content;
+  margin-top: 8px;
+}
+.dataset-card h3 {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 15px 0 8px;
+}
+.dataset-card p {
+  font-size: 11px;
+}
+.dataset-card small {
+  color: #94a887;
+  font: 9px/1.8 var(--mono);
+}
+.dataset-card > a {
+  display: block;
+  color: var(--acid);
+  font: 10px var(--mono);
+  margin-top: 15px;
+}
+.dashboard.map-expanded {
+  display: block;
+}
+.dashboard.map-expanded > .sidebar,
+.dashboard.map-expanded > .wire-panel {
+  display: none;
+}
+.dashboard.map-expanded .map-wrap {
+  min-height: 68vh;
+}
+@media (max-width: 960px) {
+  .environment-values {
+    gap: 16px;
+  }
+  .environment-values strong {
+    font-size: 23px;
+  }
+}
+@media (max-width: 680px) {
+  .environment-summary,
+  #catalog-items {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .environment-controls {
+    padding: 0 16px 12px;
+  }
+  .layer-grid {
+    grid-template-columns: 1fr;
+  }
+  .environment-values strong {
+    font-size: 23px;
+  }
+  .environment-summary > article {
+    padding: 20px;
+  }
+}

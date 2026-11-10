@@ -2,11 +2,11 @@
 
 Pemeriksaan dilakukan pada 10 November 2026 (WIB), Node.js 24.22.1.
 
-| Pemeriksaan | Hasil |
-| --- | --- |
-| `npm test` | 17 tes lulus, 0 gagal; tidak memakai jaringan upstream |
-| `npm run build` | TypeScript dan build Vite produksi berhasil |
-| `npm run smoke` | API HTTP, frontend hasil build, RSS, BMKG, dan cuaca berhasil |
+| Pemeriksaan                               | Hasil                                                           |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| `npm test`                                | 17 tes lulus, 0 gagal; tidak memakai jaringan upstream          |
+| `npm run build`                           | TypeScript dan build Vite produksi berhasil                     |
+| `npm run smoke`                           | API HTTP, frontend hasil build, RSS, BMKG, dan cuaca berhasil   |
 | `npm audit --omit=dev --audit-level=high` | 0 kerentanan dependensi produksi terlapor pada saat pemeriksaan |
 
 Hasil smoke live terakhir:
@@ -42,3 +42,14 @@ Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi 
 - Build produksi berhasil.
 - Smoke upstream: ANTARA 41 item yang lolos, detik 87, BMKG 15; 129 laporan berada dalam rentang 24 jam dan empat memiliki lokasi. Open-Meteo berhasil. Jumlah berubah mengikuti feed.
 - Pemeriksaan browser tetap belum dilakukan; perubahan antarmuka memakai kebijakan bersama dengan backend untuk menyaring daftar/peta/ekspor.
+
+## Pembaruan v0.1.2 — sumber lingkungan dari riset Mandum Rimba
+
+- 29 tes lulus, mencakup parser model udara, statistik GBIF, validasi GeoJSON dan path berkas, batas pemotongan, tanggal satelit, kontrol akses API, status konfigurasi, dan impor berkas operator.
+- Build produksi berhasil. Bundle utama sekitar 186 kB sebelum gzip; HLS tetap dimuat terpisah ketika dibutuhkan.
+- Smoke lingkungan berhasil: CAMS/Open-Meteo, GBIF (3.056.688 catatan `PRESENT` Indonesia pada saat pemeriksaan), GFW true-color PNG (56.619 byte), NASA MODIS JPEG (18.013 byte), NASA NOAA-20 hotspot PNG (3.112 byte). Signature gambar diperiksa; tanggal raster NASA yang diuji 8 November 2026 UTC.
+- Ditemukan respons NASA SNPP HTTP 200 berisi XML ServiceException untuk tanggal yang diuji. Produk default dipilih NOAA-20 dan indikator tile-error tersedia; data kosong tidak dinyatakan sebagai nol kejadian.
+- Smoke laporan lama tetap lulus dengan pembatasan topik; hasil saat pemeriksaan 126 laporan dalam 24 jam, lima berlokasi. Ini bukan angka tetap.
+- Basemap Esri dark dan referensi label diuji sebagai gambar valid; rendering browser masih belum diverifikasi.
+- Vektor GFW belum diuji live tanpa key. Uji impor GeoJSON menggunakan fixture lokal, bukan klaim dataset mangrove/bencana asli sudah diimpor. WDPA/GADM/IUCN resmi tidak disalin, Trase dikecualikan.
+- Perbandingan visual bersumber dari screenshot resmi dalam repo Mandum; tidak mengklaim pemeriksaan browser produksi atau pengujian UI interaktif telah dilakukan.

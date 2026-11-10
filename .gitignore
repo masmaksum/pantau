@@ -8,3 +8,5 @@ coverage/
 *.log
 config/cameras.json
 config/social.json
+config/context.json
+config/context-data/

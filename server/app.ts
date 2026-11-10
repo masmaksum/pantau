@@ -15,8 +15,12 @@ import {
   NEWS_FEEDS,
 } from "./providers.js";
 import { isCamera, isSocialFeed, readConfig } from "./config.js";
+import {
+  environmentRoutes,
+  type EnvironmentOptions,
+} from "./environment-routes.js";
 
-export interface Options {
+export interface Options extends EnvironmentOptions {
   cacheDir?: string;
   apiToken?: string;
   firmsKey?: string;
@@ -36,7 +40,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.1" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.2" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -62,6 +66,7 @@ export function createApp(options: Options = {}) {
         .map(([name, lat, lon]) => ({ name, lat, lon })),
     ),
   );
+  app.use("/api", environmentRoutes(cache, options));
   app.get("/api/situation", async (req, res) => {
     const hours = Number(req.query.hours ?? 24);
     if (![6, 24, 72].includes(hours)) {
