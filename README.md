@@ -1,6 +1,6 @@
 # PANTAU
 
-**Ruang pantau sumber terbuka Indonesia.** Berita, peta laporan, gempa, cuaca, dan hotspot opsional dalam satu dashboard berbahasa Indonesia.
+**Ruang pantau sumber terbuka Indonesia.** Berita, pemantauan HAM, peta laporan, gempa, cuaca, dan hotspot opsional dalam satu dashboard berbahasa Indonesia.
 
 PANTAU adalah aplikasi yang dikembangkan secara mandiri untuk memantau informasi publik di Indonesia. PANTAU menghubungkan laporan terkini dengan konteks wilayah dan lingkungan, disertai sumber, waktu pembaruan, serta keterangan ketelitian data agar informasi mudah ditelusuri dan dipahami.
 
@@ -33,8 +33,8 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 
 - Dashboard responsif dengan peta Leaflet, daftar laporan, detail kejadian, dan kondisi sumber.
 - RSS ANTARA dan detikNews; ringkasan hanya jika tersedia dalam RSS, dengan tautan penerbit asli.
-- Pengelompokan laporan yang lolos kebijakan topik: gempa, banjir/longsor, kebakaran, demo, politik, dan lainnya.
-- Pengecualian kriminal, transportasi, ekonomi, dan selebritis pada judul, ringkasan, serta kategori RSS/Atom; berlaku juga untuk feed sosial dan cache lama.
+- Pengelompokan laporan: kekerasan aparat, represi aktivis, kekerasan ormas terhadap warga sipil, persekusi, HAM lainnya, gempa, banjir/longsor, kebakaran, demo, politik, dan lainnya.
+- Prioritas pemantauan HAM; kriminal umum, transportasi, ekonomi, dan selebritis tetap dikecualikan. Aturan berlaku pada feed baru, feed sosial, dan cache lama.
 - Pencocokan judul ke gazetteer kota/provinsi terbatas. Lokasi ambigu tetap kosong. Setiap pin mencantumkan ketelitian dan metode penentuan lokasi.
 - Gempa BMKG melalui data JSON resmi, dengan waktu, magnitudo, kedalaman, dan episentrum.
 - Cuaca Open-Meteo per kota: suhu, hujan, angin, dan prakiraan tiga hari.
@@ -61,9 +61,11 @@ Lihat [inventaris sumber, perbandingan tampilan, dan panduan integrasi](docs/MAN
 
 ## Batasan topik
 
-PANTAU tidak menampilkan laporan **kriminal, transportasi, ekonomi, atau selebritis**. Kebijakan ada di `shared/topic-policy.ts`: kata kunci dan padanannya diperiksa pada judul, ringkasan, serta kategori RSS/Atom sebelum hasil ingestion disimpan. Respons API memeriksa ulang cache lama, sehingga laporan lama tidak dapat melewati kebijakan. Penghitungan item sumber mengikuti hasil yang lolos.
+PANTAU memantau **kekerasan aparat, represi terhadap aktivis, kekerasan sipil oleh ormas, persekusi, dan topik pelanggaran HAM lainnya**. Kriminal umum, transportasi, ekonomi, dan selebritis tetap dikecualikan. Deteksi topik HAM ada di `shared/human-rights.ts`. Kebijakan pengecualian ada di `shared/topic-policy.ts`: kata kunci dan padanannya diperiksa pada judul, ringkasan, serta kategori RSS/Atom sebelum hasil ingestion disimpan. Respons API memeriksa ulang cache lama, sehingga laporan lama tidak dapat melewati kebijakan. Penghitungan item sumber mengikuti hasil yang lolos.
 
-Pengecualian didahulukan pada laporan campuran: misalnya “banjir menyebabkan kemacetan” tetap dikecualikan karena membahas transportasi. Laporan bencana, demonstrasi, dan politik yang tidak cocok dengan pengecualian tetap ditampilkan. Kategori kriminal dan transportasi tidak lagi tersedia di pilihan filter; kategori internal lama masih dikenali untuk kompatibilitas cache. Pengecualian berlaku pada daftar, peta, ringkasan jumlah laporan, dan ekspor GeoJSON. Prakiraan cuaca dan konfigurasi kamera bukan laporan berita dan tidak menjalani klasifikasi topik ini.
+Konteks HAM yang dikenali dari judul atau ringkasan diprioritaskan atas pengecualian umum. Contohnya “aktivis ditangkap saat menolak investasi tambang” tetap masuk sebagai represi aktivis meskipun memuat kata “ditangkap” dan “investasi”. Label HAM adalah kategori pemantauan, bukan verifikasi tuduhan atau putusan hukum; dugaan, bantahan, dan kutipan tetap mengikuti sumber.
+
+Untuk laporan tanpa konteks HAM, pengecualian didahulukan pada laporan campuran: misalnya “banjir menyebabkan kemacetan” tetap dikecualikan karena membahas transportasi. Laporan bencana, demonstrasi, dan politik yang tidak cocok dengan pengecualian tetap ditampilkan. Berita kriminal biasa tidak otomatis menjadi topik HAM hanya karena menyebut polisi; misalnya “polisi menangkap pelaku penganiayaan” tetap dikecualikan. Kategori kriminal dan transportasi tidak lagi tersedia di pilihan filter; kategori internal lama masih dikenali untuk kompatibilitas cache. Pengecualian berlaku pada daftar, peta, ringkasan jumlah laporan, dan ekspor GeoJSON. Prakiraan cuaca dan konfigurasi kamera bukan laporan berita dan tidak menjalani klasifikasi topik ini.
 
 Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah tersaring atau lolos bila memakai istilah/nama yang belum dikenal. `Lainnya` tetap tersedia untuk topik yang tidak dilarang; ini bukan whitelist topik bencana. Aturan bisa diperluas berdasarkan contoh berita yang ditemukan.
 
@@ -157,7 +159,6 @@ Kode PANTAU dalam repositori ini berlisensi MIT. Lisensi tersebut tidak memberi 
 - [Leaflet](https://leafletjs.com/), [hls.js](https://github.com/video-dev/hls.js/) — pustaka frontend dengan lisensi masing-masing.
 
 Font Google dimuat dari layanan Google Fonts. Peta, font, dan stream opsional memerlukan jaringan browser ke penyedia masing-masing. Siapkan penyedia tile dan font lokal sendiri bila kebutuhan privasi, offline, atau skala memerlukannya.
-
 
 ## Referensi
 

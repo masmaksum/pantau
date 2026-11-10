@@ -104,6 +104,11 @@ test("API re-filters persisted pre-policy snapshots and source counts without ne
     make("celeb", "Penyanyi merilis kabar terbaru"),
     make("legacy", "Laporan lama", "kriminal"),
     make("allowed", "Banjir di Semarang", "banjir"),
+    make(
+      "ham-cached",
+      "Aktivis lingkungan ditangkap setelah aksi protes",
+      "kriminal",
+    ),
   ];
   for (const key of ["antara", "detik", "bmkg"])
     await writeFile(
@@ -120,9 +125,9 @@ test("API re-filters persisted pre-policy snapshots and source counts without ne
     const snapshot = (await response.json()) as Snapshot;
     assert.deepEqual(
       snapshot.events.map((e) => e.id),
-      ["allowed"],
+      ["allowed", "ham-cached"],
     );
-    assert.equal(snapshot.sources.find((s) => s.id === "antara")?.count, 1);
+    assert.equal(snapshot.sources.find((s) => s.id === "antara")?.count, 2);
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),

@@ -1,4 +1,5 @@
 import type { Category, Event } from "./types.js";
+import { humanRightsCategory } from "./human-rights.js";
 
 export type ExcludedTopic =
   | "kriminal"
@@ -6,12 +7,12 @@ export type ExcludedTopic =
   | "ekonomi"
   | "selebritis";
 
-// Exclusions precede classification, including mixed-topic reports. Whole-word
+// Explicit human-rights topics take priority over general-topic exclusions. Whole-word
 // matching avoids treating "partisipasi", for example, as a mention of "artis".
 const rules: [ExcludedTopic, RegExp][] = [
   [
     "kriminal",
-    /\b(kriminal(?:itas)?|kejahatan|pembunuhan|pencurian|mencuri|narkoba|narkotika|ditangkap|perampokan|korupsi|suap|penipuan|penggelapan|pencabulan|pemerkosaan|pelecehan seksual|kekerasan seksual|pengeroyokan|penusukan|penganiayaan|begal|curanmor|tersangka|terdakwa|terpidana|pencucian uang|judi online)\b/iu,
+    /\b(kriminal(?:itas)?|kejahatan|pembunuhan|dibunuh|pencurian|mencuri|narkoba|narkotika|ditangkap|perampokan|korupsi|suap|penipuan|penggelapan|pencabulan|pemerkosaan|pelecehan seksual|kekerasan seksual|pengeroyokan|penusukan|penganiayaan|dianiaya|dipukul|dikeroyok|begal|curanmor|tersangka|terdakwa|terpidana|pencucian uang|judi online)\b/iu,
   ],
   [
     "transportasi",
@@ -32,6 +33,7 @@ export function excludedTopic(
   summary = "",
   topicHints: string[] = [],
 ): ExcludedTopic | null {
+  if (humanRightsCategory(title, summary)) return null;
   const text = [title, summary, ...topicHints].join(" ").normalize("NFKC");
   return rules.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
 }
@@ -42,13 +44,19 @@ export function isAllowedReport(
   },
 ): boolean {
   return (
-    !["kriminal", "transportasi"].includes(report.category) &&
+    (humanRightsCategory(report.title, report.summary) !== null ||
+      !["kriminal", "transportasi"].includes(report.category)) &&
     excludedTopic(report.title, report.summary, report.topicHints) === null
   );
 }
 
 // Legacy categories remain readable in old snapshots, but are no longer selectable.
 export const visibleCategories: Category[] = [
+  "ham-aparat",
+  "ham-aktivis",
+  "ham-ormas",
+  "ham-persekusi",
+  "ham-lainnya",
   "gempa",
   "banjir",
   "kebakaran",
@@ -56,3 +64,12 @@ export const visibleCategories: Category[] = [
   "politik",
   "lainnya",
 ];
+
+// Reclassify cached reports using their actual text, never trust a category alone
+// to bypass exclusions. This also keeps titles/sources and verification unchanged.
+export function applyTopicPolicy<
+  T extends Pick<Event, "title" | "summary" | "category">,
+>(report: T): T {
+  const category = humanRightsCategory(report.title, report.summary);
+  return category ? { ...report, category } : report;
+}

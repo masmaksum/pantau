@@ -1,7 +1,11 @@
 import L from "leaflet";
 import { mountEnvironment } from "./environment-ui.js";
 import type Hls from "hls.js";
-import { isAllowedReport, visibleCategories } from "../shared/topic-policy.js";
+import {
+  isAllowedReport,
+  visibleCategories,
+  applyTopicPolicy,
+} from "../shared/topic-policy.js";
 import "leaflet/dist/leaflet.css";
 import "./style.css";
 import type {
@@ -13,6 +17,11 @@ import type {
 } from "../shared/types.js";
 
 const labels: Record<Category, string> = {
+  "ham-aparat": "HAM · Kekerasan aparat",
+  "ham-aktivis": "HAM · Represi aktivis",
+  "ham-ormas": "HAM · Kekerasan ormas",
+  "ham-persekusi": "HAM · Persekusi",
+  "ham-lainnya": "HAM · Hak asasi lainnya",
   gempa: "Gempa",
   banjir: "Banjir / longsor",
   kebakaran: "Kebakaran",
@@ -23,6 +32,11 @@ const labels: Record<Category, string> = {
   lainnya: "Lainnya",
 };
 const colors: Record<Category, string> = {
+  "ham-aparat": "#f1a1bd",
+  "ham-aktivis": "#f1a1bd",
+  "ham-ormas": "#f1a1bd",
+  "ham-persekusi": "#f1a1bd",
+  "ham-lainnya": "#f1a1bd",
   gempa: "#eea761",
   banjir: "#65b9dd",
   kebakaran: "#ed7964",
@@ -77,7 +91,7 @@ document.querySelector("#app")!.innerHTML = `
     <aside class="sidebar">
       <div class="panel-title"><span>01 / IKHTISAR</span><span class="small-tag">INDONESIA</span></div>
       <div class="metrics"><div><strong id="count-events">—</strong><span>Laporan</span></div><div><strong id="count-located">—</strong><span>Dengan lokasi</span></div><div><strong id="count-sources">—</strong><span>Sumber aktif</span></div><div><strong id="count-regions">—</strong><span>Lokasi berbeda</span></div></div>
-      <p class="metric-note">Kriminal, transportasi, ekonomi, dan selebritis dikecualikan. Satu laporan belum tentu satu kejadian unik.</p>
+      <p class="metric-note">Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan. Laporan HAM diprioritaskan.</p>
       <div class="side-section"><div class="panel-title"><span>CUACA LOKAL</span><span class="small-tag">MODEL</span></div><label class="sr-only" for="city">Kota cuaca</label><select id="city"><option value="jakarta">Jakarta</option></select><div id="weather" class="weather"><p class="muted">Mengambil prakiraan…</p></div></div>
       <div class="side-section source-section"><div class="panel-title"><span>KESEHATAN SUMBER</span><span id="health-count">—</span></div><div id="sources"><p class="muted">Menghubungkan sumber…</p></div></div>
       <div class="side-foot"><span class="compass">↗</span><p>Data membantu orientasi.<br>Konfirmasi sebelum bertindak.</p></div>
@@ -85,7 +99,7 @@ document.querySelector("#app")!.innerHTML = `
     <section class="map-panel" aria-label="Peta kejadian">
       <div class="map-top"><div><span class="eyebrow">02 / PETA SITUASI</span><h2>Sinyal di lapangan <span id="map-count">—</span></h2></div><button id="reset-map" class="outline-button">↗ Indonesia</button></div>
       <div class="map-wrap"><div id="map"></div><div class="map-caption">PETA INTERAKTIF <span>GESER · PERBESAR · PILIH TITIK</span></div><div class="map-empty" id="map-empty" hidden>Tidak ada titik untuk filter ini.</div></div>
-      <div class="map-legend"><span><i style="background:#eea761"></i>Gempa</span><span><i style="background:#65b9dd"></i>Banjir</span><span><i style="background:#ed7964"></i>Kebakaran</span><span><i style="background:#bb9cdb"></i>Demo</span><span><i style="background:#a0aca1"></i>Lainnya</span></div>
+      <div class="map-legend"><span><i style="background:#f1a1bd"></i>HAM</span><span><i style="background:#eea761"></i>Gempa</span><span><i style="background:#65b9dd"></i>Banjir</span><span><i style="background:#ed7964"></i>Kebakaran</span><span><i style="background:#bb9cdb"></i>Demo</span><span><i style="background:#a0aca1"></i>Lainnya</span></div>
       <div class="map-disclaimer"><span>⌖</span><p>Pin berita adalah perkiraan pusat wilayah dari judul. Episentrum dan piksel satelit diberi label tersendiri. Area tanpa titik belum tentu bebas kejadian.</p></div>
     </section>
     <section class="wire-panel" aria-label="Daftar laporan">
@@ -103,7 +117,7 @@ document.querySelector("#app")!.innerHTML = `
   <footer><span class="footer-brand">PANTAU<span> / </span>BUILT FOR CONTEXT.</span><span>Pembaruan 120 detik · Waktu WIB · Implementasi mandiri</span></footer>
 </main>
 <dialog id="detail"><button class="dialog-close" data-close="detail" aria-label="Tutup detail">×</button><div id="detail-content"></div></dialog>
-<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Aturan pengecualian didahulukan pada laporan campuran. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Fitur SITREP seperti pasar, AIS, ADS-B, MAGMA, lalu lintas TomTom, pembaca artikel lengkap, dan analisis AI belum diimplementasikan pada versi ini.</p></dialog>
+<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Laporan tentang kekerasan aparat, represi aktivis, kekerasan ormas, persekusi, dan hak asasi lainnya diprioritaskan meskipun memuat istilah topik yang dikecualikan. Label HAM adalah klasifikasi topik, bukan temuan hukum; dugaan dan bantahan tetap mengikuti sumber. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Fitur SITREP seperti pasar, AIS, ADS-B, MAGMA, lalu lintas TomTom, pembaca artikel lengkap, dan analisis AI belum diimplementasikan pada versi ini.</p></dialog>
 <dialog id="connection"><button class="dialog-close" data-close="connection" aria-label="Tutup pengaturan">×</button><div class="eyebrow">KONEKSI</div><h2>Token akses instans</h2><p>Isi hanya bila operator mengaktifkan PANTAU_API_TOKEN. Token disimpan pada sesi tab ini.</p><form id="token-form"><input type="password" id="api-token" placeholder="Token akses" aria-label="Token akses" autocomplete="off" /><button class="solid-button" type="submit">Simpan & hubungkan</button></form></dialog>
 <dialog id="camera-dialog"><button class="dialog-close" data-close="camera-dialog" aria-label="Tutup kamera">×</button><h2 id="camera-name"></h2><video id="camera-video" controls playsinline></video><p id="camera-message" role="status"></p></dialog>
 <div id="toast" role="status" hidden></div>`;
@@ -210,6 +224,7 @@ function render() {
   const windowStart =
     Date.now() - Number($<HTMLSelectElement>("hours").value) * 3_600_000;
   filtered = snapshot.events
+    .map(applyTopicPolicy)
     .filter(isAllowedReport)
     .filter(
       (e) =>
@@ -301,7 +316,7 @@ function showDetail(e: Event) {
       (s.name === e.source || (s.id === "bmkg" && e.source === "BMKG")),
   );
   $("detail-content").innerHTML =
-    `<div class="eyebrow" style="color:${colors[e.category]}">${labels[e.category]} / ${esc(e.source)}</div><h2>${esc(e.title)}</h2><p>${esc(e.summary || "Ringkasan tidak tersedia. Baca laporan asli melalui tautan sumber.")}</p><dl><dt>Publikasi</dt><dd>${esc(fmtTime(e.publishedAt))}</dd><dt>Pertama dibaca dalam pengambilan ini</dt><dd>${esc(fmtTime(e.observedAt))}</dd><dt>Lokasi</dt><dd>${esc(e.location?.name ?? "Tidak diketahui")}</dd><dt>Ketelitian lokasi</dt><dd>${esc(precisionText(e))}</dd><dt>Status informasi</dt><dd>${e.verification === "official" ? "Data sumber resmi" : e.verification === "sensor" ? "Deteksi sensor, perlu interpretasi" : "Laporan penerbit, belum diverifikasi PANTAU"}${stale ? " · cache sumber lama" : ""}</dd>${e.confidence ? `<dt>Confidence sensor</dt><dd>${esc(e.confidence)}</dd>` : ""}</dl><a class="solid-button" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">Baca di sumber asli ↗</a>`;
+    `<div class="eyebrow" style="color:${colors[e.category]}">${labels[e.category]} / ${esc(e.source)}</div><h2>${esc(e.title)}</h2>${e.category.startsWith("ham-") ? '<p class="muted">Pemantauan topik HAM; klasifikasi ini bukan verifikasi tuduhan atau putusan pelanggaran. Baca dugaan, bantahan, dan konteks dalam sumber asli.</p>' : ""}<p>${esc(e.summary || "Ringkasan tidak tersedia. Baca laporan asli melalui tautan sumber.")}</p><dl><dt>Publikasi</dt><dd>${esc(fmtTime(e.publishedAt))}</dd><dt>Pertama dibaca dalam pengambilan ini</dt><dd>${esc(fmtTime(e.observedAt))}</dd><dt>Lokasi</dt><dd>${esc(e.location?.name ?? "Tidak diketahui")}</dd><dt>Ketelitian lokasi</dt><dd>${esc(precisionText(e))}</dd><dt>Status informasi</dt><dd>${e.verification === "official" ? "Data sumber resmi" : e.verification === "sensor" ? "Deteksi sensor, perlu interpretasi" : "Laporan penerbit, belum diverifikasi PANTAU"}${stale ? " · cache sumber lama" : ""}</dd>${e.confidence ? `<dt>Confidence sensor</dt><dd>${esc(e.confidence)}</dd>` : ""}</dl><a class="solid-button" href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">Baca di sumber asli ↗</a>`;
   $<HTMLDialogElement>("detail").showModal();
 }
 async function refresh() {

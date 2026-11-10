@@ -1,6 +1,6 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
 import type { Event, Weather } from "../shared/types.js";
-import { excludedTopic } from "../shared/topic-policy.js";
+import { excludedTopic, applyTopicPolicy } from "../shared/topic-policy.js";
 import {
   canonicalUrl,
   classify,
@@ -77,6 +77,7 @@ export function parseFeed(
         },
       ];
     })
+    .map(applyTopicPolicy)
     .slice(0, 100);
 }
 export const loadFeed = async (url: string, name: string) =>

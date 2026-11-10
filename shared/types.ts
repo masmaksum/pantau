@@ -1,4 +1,6 @@
+import type { HumanRightsCategory } from "./human-rights.js";
 export type Category =
+  | HumanRightsCategory
   | "gempa"
   | "banjir"
   | "kebakaran"

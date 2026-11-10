@@ -53,3 +53,13 @@ Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi 
 - Basemap Esri dark dan referensi label diuji sebagai gambar valid; rendering browser masih belum diverifikasi.
 - Vektor GFW belum diuji live tanpa key. Uji impor GeoJSON menggunakan fixture lokal, bukan klaim dataset mangrove/bencana asli sudah diimpor. WDPA/GADM/IUCN resmi tidak disalin, Trase dikecualikan.
 - Perbandingan visual bersumber dari screenshot resmi dalam repo Mandum; tidak mengklaim pemeriksaan browser produksi atau pengujian UI interaktif telah dilakukan.
+
+## Pembaruan v0.1.3 — pemantauan HAM
+
+- Lima kategori pemantauan: kekerasan aparat, represi aktivis, kekerasan ormas terhadap warga sipil, persekusi, dan HAM lainnya.
+- Konteks HAM dalam judul/ringkasan diprioritaskan atas pengecualian kriminal/transportasi/ekonomi/selebritis. Kriminal umum tetap dikecualikan. Metadata kategori saja tidak cukup untuk melewati penyaringan.
+- Cache lama diklasifikasi ulang saat disajikan. Laporan yang sudah tidak tersimpan akibat kebijakan sebelumnya hanya dapat muncul bila masih tersedia dalam pengambilan feed berikutnya; tidak ada pemulihan arsip yang tidak dimiliki.
+- 34 tes lulus, termasuk pemisahan penindakan kriminal biasa dari konteks kekerasan aparat, laporan HAM yang memuat kata topik terlarang, konteks dalam ringkasan, dan penyajian cache lama melalui API.
+- Build dan smoke upstream lulus. Hasil smoke saat pemeriksaan: 127 laporan dalam 24 jam; jumlah berubah mengikuti sumber.
+- Judul, ringkasan, sumber, dugaan, bantahan, dan status `reported` dipertahankan. Label HAM adalah kategori pemantauan heuristik, bukan verifikasi tuduhan atau putusan pelanggaran.
+- Sumber feed tidak berubah. Kategori tambahan tidak menjamin cakupan lengkap isu HAM. Pengujian visual browser belum dilakukan.

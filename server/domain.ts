@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Category, Event, Location } from "../shared/types.js";
+import { humanRightsCategory } from "../shared/human-rights.js";
 
 // Small, explicit gazetteer. Never silently promote a city/province match to an exact site.
 export const places = [
@@ -70,6 +71,8 @@ export function locate(title: string): Location | null {
   };
 }
 export function classify(text: string): Category {
+  const ham = humanRightsCategory(text);
+  if (ham) return ham;
   const rules: [Category, RegExp][] = [
     ["gempa", /\bgempa(?:bumi)?\b/i],
     ["banjir", /\b(banjir|longsor)\b/i],

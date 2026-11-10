@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import type { Event, Snapshot, SourceStatus } from "../shared/types.js";
 import { SourceCache } from "./cache.js";
 import { deduplicate, places, withinHours } from "./domain.js";
-import { isAllowedReport } from "../shared/topic-policy.js";
+import { isAllowedReport, applyTopicPolicy } from "../shared/topic-policy.js";
 import {
   BMKG_URL,
   loadFeed,
@@ -40,7 +40,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.2" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.3" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -117,7 +117,9 @@ export function createApp(options: Options = {}) {
           provider.load,
         );
         // Reapply current policy to last-good snapshots saved before this change.
-        const events = (r.value ?? []).filter(isAllowedReport);
+        const events = (r.value ?? [])
+          .map(applyTopicPolicy)
+          .filter(isAllowedReport);
         return {
           events,
           status: {
