@@ -8,9 +8,11 @@ import type {
   ArchivePage,
   ArchivedArticle,
   ArchiveVersion,
+  PreservedArticle,
 } from "../shared/archive.js";
 import { applyTopicPolicy, isAllowedReport } from "../shared/topic-policy.js";
 import { canonicalUrl, idFor } from "./domain.js";
+import { ArticleStore } from "./article-store.js";
 
 const hash = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -54,6 +56,7 @@ interface FeedIntake {
 
 export class NewsArchive {
   readonly database: DatabaseSync;
+  readonly content: ArticleStore;
   constructor(readonly path: string) {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.database = new DatabaseSync(path);
@@ -90,6 +93,7 @@ export class NewsArchive {
       this.database.close();
       throw new Error("Unsupported archive schema version");
     }
+    this.content = new ArticleStore(this.database);
   }
 
   preserveBatch(
@@ -184,6 +188,13 @@ export class NewsArchive {
             sequence,
             JSON.stringify(version),
           );
+          this.content.enqueue(
+            id,
+            sequence,
+            intake.sourceId,
+            event.url,
+            archivedAt,
+          );
           if (previous) revised++;
         }
       }
@@ -224,7 +235,8 @@ export class NewsArchive {
     const literal = (s: string) => `%${s.replace(/[\\%_]/g, "\\$&")}%`;
     if (filter.q)
       add(
-        "(initial_title LIKE ? ESCAPE '\\' OR initial_summary LIKE ? ESCAPE '\\')",
+        "(initial_title LIKE ? ESCAPE '\\' OR initial_summary LIKE ? ESCAPE '\\' OR EXISTS (SELECT 1 FROM article_captures c WHERE c.article_id=articles.id AND json_extract(c.payload,'$.text') LIKE ? ESCAPE '\\'))",
+        literal(filter.q),
         literal(filter.q),
         literal(filter.q),
       );
@@ -256,13 +268,19 @@ export class NewsArchive {
   }
   detail(
     id: string,
-  ): (ArchivedArticle & { versions: ArchiveVersion[] }) | null {
+  ):
+    | (ArchivedArticle & {
+        versions: ArchiveVersion[];
+        preservation: PreservedArticle;
+      })
+    | null {
     const row = this.database
       .prepare("SELECT * FROM articles WHERE id=?")
       .get(id);
     if (!row) return null;
     return {
       ...this.record(row),
+      preservation: this.content.detail(id),
       versions: this.database
         .prepare(
           "SELECT payload FROM revisions WHERE article_id=? ORDER BY sequence",
@@ -279,6 +297,7 @@ export class NewsArchive {
   }
   stats() {
     return {
+      preservation: this.content.stats(),
       articles: Number(
         this.database.prepare("SELECT COUNT(*) AS n FROM articles").get()?.n ??
           0,

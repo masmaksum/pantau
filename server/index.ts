@@ -30,12 +30,27 @@ const newsTimer = setInterval(() => {
   void pollNews();
 }, 120_000);
 newsTimer.unref();
+// Durable page/photo queue is separate from RSS requests and survives restarts.
+const captureArticles = () =>
+  app.locals
+    .captureArticles()
+    .catch(() =>
+      console.error(
+        "Article preservation failed; inspect archive status/storage.",
+      ),
+    );
+void captureArticles();
+const articleTimer = setInterval(() => {
+  void captureArticles();
+}, 5000);
+articleTimer.unref();
 let stopping = false;
 for (const signal of ["SIGTERM", "SIGINT"])
   process.on(signal, () => {
     if (stopping) return;
     stopping = true;
     clearInterval(newsTimer);
+    clearInterval(articleTimer);
     server.close(() => {
       void app.locals.dispose().then(() => process.exit(0));
     });

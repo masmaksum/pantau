@@ -2,6 +2,7 @@ import express from "express";
 import { NewsArchive } from "./archive.js";
 import { NewsPipeline } from "./news-pipeline.js";
 import { archiveRoutes } from "./archive-routes.js";
+import { ArticleWorker } from "./article-worker.js";
 import {
   collectOfficialSocial,
   officialSocialStates,
@@ -34,6 +35,8 @@ export function createApp(options: Options = {}) {
   const cache = new SourceCache(options.cacheDir ?? ".cache");
   const archive = new NewsArchive(options.archivePath ?? "data/news.sqlite");
   const newsPipeline = new NewsPipeline(cache, archive);
+  const articleWorker = new ArticleWorker(archive);
+  app.locals.captureArticles = () => articleWorker.tick();
   app.locals.pollNews = async () => {
     const result = await newsPipeline.poll();
     const health = newsPipeline.health();
@@ -41,6 +44,7 @@ export function createApp(options: Options = {}) {
     return result;
   };
   app.locals.dispose = async () => {
+    await articleWorker.stop();
     await newsPipeline.idle();
     archive.close();
   };
@@ -54,7 +58,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.5" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.6" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");

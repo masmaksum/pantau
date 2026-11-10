@@ -1863,6 +1863,56 @@ dd {
   font-size: 9px;
   overflow-wrap: anywhere;
 }
+.preserved-capture {
+  border-top: 1px solid #455737;
+  padding: 18px 0;
+}
+.preserved-capture summary {
+  cursor: pointer;
+  color: var(--acid);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.preserved-capture h4 {
+  font-size: 22px;
+  line-height: 1.5;
+}
+.preserved-text p {
+  white-space: pre-line;
+  font-size: 15px;
+  line-height: 1.9;
+}
+.preserved-photos figure {
+  margin: 24px 0;
+}
+.preserved-photos img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.preserved-photos img:not([src]) {
+  display: none;
+}
+.preserved-photos figcaption {
+  font-size: 13px;
+  line-height: 1.7;
+  margin-top: 10px;
+  color: #dce7d0;
+}
+.preserved-photos small,
+.preserved-capture > small {
+  display: block;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.capture-warning {
+  color: #edba82;
+}
+.capture-jobs {
+  padding-left: 20px;
+  font-size: 12px;
+  line-height: 1.9;
+}
 @media (max-width: 960px) {
   .archive-filter {
     grid-template-columns: 1fr 1fr;

@@ -42,17 +42,19 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Filter 6/24/72 jam, kategori, pencarian, dan hanya laporan berlokasi; pembaruan otomatis 120 detik.
 - Ekspor GeoJSON untuk titik sesuai filter, termasuk sumber, timestamp, ketelitian, dan jumlah laporan yang tidak terpetakan.
 - Cache terakhir yang berhasil, penanda data lama, jeda retry, dan penggabungan request bersamaan ke sumber yang sama.
-- Arsip SQLite untuk berita yang lolos saat masuk: judul/ringkasan, kanal, kriteria, lokasi/ketelitian, waktu, hash, serta riwayat versi. Pengambilan berita berjalan di server setiap 120 detik.
+- Arsip SQLite untuk berita yang lolos saat masuk: kriteria, lokasi/ketelitian, riwayat versi, serta pengambilan teks lengkap halaman penerbit, foto lokal, caption/kredit, dan HTML sumber melalui antrean persisten. Pengambilan RSS berjalan setiap 120 detik.
 - Konfigurasi CCTV HLS/tautan dan persiapan API resmi X, Threads, Instagram, Facebook, TikTok. Credential kosong; collector sosial belum aktif.
 - Token akses API opsional untuk instans yang memerlukannya.
 
-## Preservasi berita — v0.1.5
+## Preservasi berita — v0.1.6
 
 Berita yang lolos dari kanal RSS disimpan sebelum filter tampilan 6/24/72 jam, sehingga tetap tersedia setelah hilang dari RSS atau keluar dari rentang live. Kategori, lokasi, dan snapshot aturan saat masuk dibekukan pada versi awal; perubahan berikutnya disimpan sebagai versi baru. Berita tanpa lokasi tetap disimpan sebagai lokasi belum diketahui.
 
 Buka **Arsip berita** untuk mencari menurut kanal, kategori awal, lokasi, kata kunci, dan tanggal masuk (WIB), melihat riwayat versi, serta mengekspor halaman JSON. Database terpisah dari cache, default `data/news.sqlite` melalui `ARCHIVE_PATH`. Backup lengkap: `npm run archive:backup -- backups/news-YYYY-MM-DD.sqlite`.
 
-Yang dipreservasi adalah **judul, ringkasan RSS, dan metadata yang diterima**, belum teks lengkap/HTML/WARC halaman artikel. Pengambilan berkala memerlukan server tetap berjalan. Detail penyimpanan, volume persisten, snapshot kriteria, backup dan API tersedia di [panduan arsip berita](docs/NEWS_ARCHIVE.md).
+**Teks lengkap artikel, file foto, caption/kredit, dan HTML sumber** diambil dari halaman publik ANTARA/detik melalui antrean yang berjalan di latar belakang. Detail arsip menampilkan teks dan foto dari salinan lokal, status berhasil/sebagian/gagal, serta unduhan teks, foto, metadata, dan HTML. Antrean lama dilanjutkan setelah restart; arsip v0.1.5 otomatis masuk antrean pengambilan halaman.
+
+Isi halaman adalah hasil pengambilan pada waktu yang dicatat, bukan rekonstruksi halaman pada waktu RSS dahulu masuk. Pengambilan bergantung pada akses sumber dan dukungan extractor; halaman berbayar/login, CAPTCHA, video, serta konten yang hanya dimuat JavaScript tidak dibypass atau dijamin tercakup. Seluruh teks dan binary foto berada di SQLite sehingga backup mencakup semuanya. Pengambilan berkala memerlukan server tetap berjalan. Detail penyimpanan, volume persisten, batas pengambilan, backup dan API tersedia di [panduan arsip berita](docs/NEWS_ARCHIVE.md).
 
 ## Konteks lingkungan — v0.1.2
 

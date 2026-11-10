@@ -80,6 +80,29 @@ export function archiveRoutes(pipeline: NewsPipeline) {
     }
     res.json(pipeline.archive.list(filter));
   });
+  router.get("/archive/:id/captures/:captureId/assets/:hash", (req, res) => {
+    if (!/^[a-f0-9]{64}$/.test(String(req.params.hash))) {
+      res.status(400).json({ error: "Hash aset tidak valid" });
+      return;
+    }
+    const asset = pipeline.archive.content.asset(
+      String(req.params.id),
+      String(req.params.captureId),
+      String(req.params.hash),
+    );
+    if (!asset) {
+      res.status(404).json({ error: "Aset arsip tidak ditemukan" });
+      return;
+    }
+    // Raw publisher HTML is evidence for download only; it is never rendered on this origin.
+    const html = asset.mime === "text/html";
+    res.set({
+      "Content-Type": html ? "application/octet-stream" : asset.mime,
+      "Content-Security-Policy": "sandbox; default-src 'none'",
+      "Content-Disposition": `${html ? "attachment" : "inline"}; filename="${asset.hash}.${html ? "html" : asset.mime.split("/")[1]}"`,
+    });
+    res.send(Buffer.from(asset.data));
+  });
   router.get("/archive/:id", (req, res) => {
     const record = pipeline.archive.detail(String(req.params.id));
     if (!record) {

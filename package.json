@@ -1,6 +1,6 @@
 {
   "name": "pantau",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
   "type": "module",
   "engines": {
@@ -15,14 +15,17 @@
     "check": "tsc --noEmit",
     "smoke": "tsx scripts/smoke.ts",
     "smoke:environment": "tsx scripts/smoke-environment.ts",
-    "archive:backup": "tsx scripts/archive-backup.ts"
+    "archive:backup": "tsx scripts/archive-backup.ts",
+    "smoke:preservation": "tsx scripts/smoke-preservation.ts"
   },
   "dependencies": {
+    "cheerio": "^1.1.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "fast-xml-parser": "^5.3.1",
     "hls.js": "^1.6.13",
     "leaflet": "^1.9.4",
+    "robots-parser": "^3.0.1",
     "undici": "^7.16.0"
   },
   "devDependencies": {

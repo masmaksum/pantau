@@ -40,4 +40,53 @@ export interface ArchiveHealth {
   articles: number;
   revisions: number;
   message?: string;
+  preservation?: Record<string, number>;
+}
+
+export interface PreservedPhoto {
+  sourceUrl: string;
+  caption: string | null;
+  alt: string | null;
+  assetHash: string | null;
+  mime?: string;
+  bytes?: number;
+  error?: string;
+}
+export interface PreservedPage {
+  url: string;
+  fetchedAt: string;
+  htmlHash: string;
+}
+export interface ArticleCapture {
+  id: string;
+  articleId: string;
+  revision: number;
+  capturedAt: string;
+  extractor: string;
+  title: string;
+  byline: string | null;
+  text: string;
+  pages: PreservedPage[];
+  photos: PreservedPhoto[];
+  warnings: string[];
+  contentHash: string;
+  status: "complete" | "partial";
+}
+export interface CaptureJob {
+  articleId: string;
+  revision: number;
+  status:
+    | "queued"
+    | "running"
+    | "retry"
+    | "complete"
+    | "partial"
+    | "unavailable";
+  attempts: number;
+  nextAttemptAt: string;
+  message: string | null;
+}
+export interface PreservedArticle {
+  jobs: CaptureJob[];
+  captures: ArticleCapture[];
 }

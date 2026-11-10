@@ -165,7 +165,7 @@ L.control
   .addTo(map);
 const environment = mountEnvironment(map, api, fmtTime);
 const officialSocial = mountOfficialSocial(api);
-mountNewsArchive(api, fmtTime, labels, map);
+mountNewsArchive(api, fmtTime, labels, map, apiBlob);
 const markers = L.layerGroup().addTo(map);
 const markerIndex = new Map<string, L.CircleMarker>();
 let snapshot: Snapshot | null = null;
@@ -183,6 +183,12 @@ function notify(message: string) {
   window.setTimeout(() => ($("toast").hidden = true), 4500);
 }
 async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return (await apiResponse(path, signal)).json();
+}
+async function apiBlob(path: string): Promise<Blob> {
+  return (await apiResponse(path)).blob();
+}
+async function apiResponse(path: string, signal?: AbortSignal) {
   const token = sessionStorage.getItem("pantau-token");
   const response = await fetch(path, {
     signal,
@@ -192,7 +198,7 @@ async function api<T>(path: string, signal?: AbortSignal): Promise<T> {
     throw new Error("Akses membutuhkan token. Buka pengaturan koneksi (⚙).");
   if (!response.ok)
     throw new Error(`Permintaan gagal (HTTP ${response.status}).`);
-  return response.json();
+  return response;
 }
 const precisionText = (e: Event) =>
   !e.location
