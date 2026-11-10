@@ -5,7 +5,11 @@ import { createApp } from "../server/app.js";
 import { isCamera } from "../server/config.js";
 
 test("API access token is enforced; visitor input cannot become a fetch URL", async () => {
-  const server = createApp({ apiToken: "test-token" }).listen(0, "127.0.0.1");
+  const app = createApp({
+    archivePath: ":memory:",
+    apiToken: "test-token",
+  });
+  const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((r) => server.once("listening", r));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   try {
@@ -41,6 +45,7 @@ test("API access token is enforced; visitor input cannot become a fetch URL", as
     await new Promise<void>((resolve, reject) =>
       server.close((e) => (e ? reject(e) : resolve())),
     );
+    await app.locals.dispose();
   }
 });
 test("operator config rejects unsafe media links", () => {

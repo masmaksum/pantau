@@ -1,10 +1,10 @@
 {
   "name": "pantau",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "dev": "tsx watch server/index.ts",
@@ -14,7 +14,8 @@
     "test": "tsx --test tests/*.test.ts",
     "check": "tsc --noEmit",
     "smoke": "tsx scripts/smoke.ts",
-    "smoke:environment": "tsx scripts/smoke-environment.ts"
+    "smoke:environment": "tsx scripts/smoke-environment.ts",
+    "archive:backup": "tsx scripts/archive-backup.ts"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

@@ -115,7 +115,8 @@ test("API re-filters persisted pre-policy snapshots and source counts without ne
       join(dir, `${key}.json`),
       JSON.stringify({ value: key === "antara" ? old : [], fetchedAt: now }),
     );
-  const server = createApp({ cacheDir: dir }).listen(0, "127.0.0.1");
+  const app = createApp({ archivePath: ":memory:", cacheDir: dir });
+  const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve) => server.once("listening", resolve));
   try {
     const response = await fetch(
@@ -132,6 +133,7 @@ test("API re-filters persisted pre-policy snapshots and source counts without ne
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );
+    await app.locals.dispose();
     await rm(dir, { recursive: true, force: true });
   }
 });

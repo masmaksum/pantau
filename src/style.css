@@ -1765,3 +1765,122 @@ dd {
     grid-template-columns: 1fr;
   }
 }
+
+.archive-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+}
+#archive-dialog {
+  max-width: 1250px;
+}
+#archive-detail {
+  max-width: 850px;
+}
+.archive-filter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin: 24px 0 12px;
+}
+.archive-filter label {
+  color: #a6b59a;
+  font: 10px/1.7 var(--mono);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.archive-filter input,
+.archive-filter select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #455737;
+  padding: 10px;
+  background: #101b13;
+  color: #dce7d0;
+  font:
+    12px "DM Sans",
+    sans-serif;
+  border-radius: 3px;
+}
+.archive-caption {
+  font-size: 11px !important;
+}
+.archive-table-wrap {
+  overflow: auto;
+}
+.archive-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+.archive-table th {
+  text-align: left;
+  font: 9px/1.6 var(--mono);
+  color: var(--acid);
+  padding: 12px;
+  border-bottom: 1px solid #455737;
+}
+.archive-table td {
+  vertical-align: top;
+  padding: 14px 12px;
+  font-size: 11px;
+  line-height: 1.7;
+  border-bottom: 1px solid #35462c;
+}
+.archive-table td:first-child {
+  width: 38%;
+}
+.archive-table td small {
+  display: block;
+  color: #8ea17e;
+  font-size: 10px;
+}
+.archive-table .event-title {
+  margin: 0 0 8px;
+}
+.archive-pagination {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  font: 10px var(--mono);
+}
+.archive-pagination > button:last-child {
+  margin-left: auto;
+}
+.archive-version {
+  padding: 24px 0;
+  border-top: 1px solid #455737;
+}
+.archive-version h3 {
+  font-weight: 500;
+  line-height: 1.6;
+}
+.archive-version code {
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 960px) {
+  .archive-filter {
+    grid-template-columns: 1fr 1fr;
+  }
+  .topbar {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .topbar .tab,
+  .topbar-end {
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 680px) {
+  .archive-filter {
+    grid-template-columns: 1fr;
+  }
+  .archive-pagination {
+    gap: 10px;
+  }
+}

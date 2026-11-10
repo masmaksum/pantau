@@ -2,15 +2,18 @@ import "dotenv/config";
 import { createApp } from "../server/app.js";
 import type { AddressInfo } from "node:net";
 import type { Snapshot } from "../shared/types.js";
+import type { ArchiveHealth, ArchivePage } from "../shared/archive.js";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const directory = await mkdtemp(join(tmpdir(), "pantau-smoke-"));
-const server = createApp({
+const app = createApp({
+  archivePath: join(directory, "news.sqlite"),
   cacheDir: directory,
   firmsKey: process.env.FIRMS_MAP_KEY,
-}).listen(0, "127.0.0.1");
+});
+const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 try {
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -27,6 +30,28 @@ try {
   );
   if (!result.sources.some((s) => s.status === "ok" && s.count > 0))
     throw new Error("No live provider is available");
+  const archiveHealth = (await (
+    await fetch(`${base}/api/archive/status`)
+  ).json()) as ArchiveHealth;
+  const archived = (await (
+    await fetch(`${base}/api/archive?limit=1`)
+  ).json()) as ArchivePage;
+  if (
+    archiveHealth.status !== "ok" ||
+    archiveHealth.articles < 1 ||
+    !archived.items?.length
+  )
+    throw new Error("Live news archive unavailable or empty");
+  const saved = archived.items[0].initial;
+  if (
+    JSON.stringify(saved.criteria.locationAtEntry) !==
+      JSON.stringify(saved.event.location) ||
+    saved.criteria.categoryAtEntry !== saved.event.category
+  )
+    throw new Error("Archive criteria differ from received snapshot");
+  console.log(
+    `News archive: ${archiveHealth.articles} articles; ${archiveHealth.revisions} revisions; original criteria/location retained`,
+  );
   const weather = await fetch(`${base}/api/weather?city=jakarta`);
   const forecast = await weather.json();
   console.log(`Open-Meteo: HTTP ${weather.status}, ${forecast.status}`);
@@ -42,5 +67,6 @@ try {
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
+  await app.locals.dispose();
   await rm(directory, { recursive: true, force: true });
 }

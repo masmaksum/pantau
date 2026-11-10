@@ -47,6 +47,12 @@ export interface Snapshot {
   generatedAt: string;
   events: Event[];
   sources: SourceStatus[];
+  archive?: {
+    status: "ok" | "error";
+    articles: number;
+    revisions: number;
+    message?: string;
+  };
 }
 export interface Weather {
   city: string;

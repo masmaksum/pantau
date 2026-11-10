@@ -7,7 +7,11 @@ import { EnvHttpProxyAgent, fetch as upstream } from "undici";
 import { forestTileUrl } from "../shared/environment.js";
 
 const directory = await mkdtemp(join(tmpdir(), "pantau-environment-smoke-"));
-const server = createApp({ cacheDir: directory }).listen(0, "127.0.0.1");
+const app = createApp({
+  archivePath: join(directory, "news.sqlite"),
+  cacheDir: directory,
+});
+const server = app.listen(0, "127.0.0.1");
 await new Promise<void>((resolve) => server.once("listening", resolve));
 const dispatcher = new EnvHttpProxyAgent();
 try {
@@ -67,5 +71,6 @@ try {
   await new Promise<void>((resolve, reject) =>
     server.close((error) => (error ? reject(error) : resolve())),
   );
+  await app.locals.dispose();
   await rm(directory, { recursive: true, force: true });
 }

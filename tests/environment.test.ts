@@ -177,12 +177,14 @@ test("environment endpoints enforce auth, honest setup states and fixed data pat
       ],
     }),
   );
-  const server = createApp({
+  const app = createApp({
+    archivePath: ":memory:",
     cacheDir: dir,
     apiToken: "secret",
     contextManifest: manifest,
     contextRoot: dir,
-  }).listen(0, "127.0.0.1");
+  });
+  const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   try {
@@ -241,6 +243,7 @@ test("environment endpoints enforce auth, honest setup states and fixed data pat
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );
+    await app.locals.dispose();
     await rm(dir, { recursive: true, force: true });
   }
 });

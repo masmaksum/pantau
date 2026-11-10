@@ -1,4 +1,5 @@
 import L from "leaflet";
+import { mountNewsArchive } from "./archive-ui.js";
 import { mountEnvironment } from "./environment-ui.js";
 import { mountOfficialSocial } from "./social-ui.js";
 import type Hls from "hls.js";
@@ -164,6 +165,7 @@ L.control
   .addTo(map);
 const environment = mountEnvironment(map, api, fmtTime);
 const officialSocial = mountOfficialSocial(api);
+mountNewsArchive(api, fmtTime, labels, map);
 const markers = L.layerGroup().addTo(map);
 const markerIndex = new Map<string, L.CircleMarker>();
 let snapshot: Snapshot | null = null;
@@ -341,9 +343,14 @@ async function refresh() {
     const failed = data.sources.filter(
       (s) => s.status === "error" || s.status === "stale",
     );
-    $("notice").hidden = failed.length === 0;
+    $("notice").hidden =
+      failed.length === 0 && data.archive?.status !== "error";
     $("notice").textContent =
       `${failed.length} sumber mengalami gangguan: ${failed.map((s) => s.name).join(", ")}. Periksa kesehatan sumber untuk waktu data terakhir.`;
+    if (data.archive?.status === "error")
+      $("notice").textContent =
+        data.archive.message ??
+        "Arsip gagal disimpan; laporan live belum terjamin tersimpan.";
     $("sync-label").textContent = "TERHUBUNG";
   } catch (error) {
     if (controller.signal.aborted) return;

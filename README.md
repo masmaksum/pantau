@@ -6,7 +6,7 @@ PANTAU adalah aplikasi yang dikembangkan secara mandiri untuk memantau informasi
 
 ## Menjalankan
 
-Persyaratan: Node.js 22 atau lebih baru dan npm. Verifikasi awal dilakukan pada Node.js 24.
+Persyaratan: **Node.js 24 atau lebih baru** dan npm. Arsip berita menggunakan SQLite bawaan Node.js.
 
 ```sh
 npm ci
@@ -27,7 +27,7 @@ npm run dev
 npm run dev:web
 ```
 
-Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm start`, set `HOST=0.0.0.0`, dan gunakan `PORT` yang diberikan platform. Health check: `/healthz`. Tidak diperlukan database. `.cache/` boleh ditempatkan pada volume persisten; tanpa volume, cache hilang ketika instance diganti. Cache/coalescing berlaku per proses, bukan antar-replika.
+Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm start`, set `HOST=0.0.0.0`, dan gunakan `PORT` yang diberikan platform. Health check: `/healthz`. Arsip memakai SQLite lokal; tidak diperlukan server database terpisah. `.cache/` boleh ditempatkan pada volume persisten; tanpa volume, cache hilang ketika instance diganti. Cache/coalescing berlaku per proses, bukan antar-replika. **Pasang volume persisten untuk `ARCHIVE_PATH` agar arsip bertahan saat container/deployment diganti.**
 
 ## Yang sudah diimplementasikan
 
@@ -42,8 +42,17 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Filter 6/24/72 jam, kategori, pencarian, dan hanya laporan berlokasi; pembaruan otomatis 120 detik.
 - Ekspor GeoJSON untuk titik sesuai filter, termasuk sumber, timestamp, ketelitian, dan jumlah laporan yang tidak terpetakan.
 - Cache terakhir yang berhasil, penanda data lama, jeda retry, dan penggabungan request bersamaan ke sumber yang sama.
+- Arsip SQLite untuk berita yang lolos saat masuk: judul/ringkasan, kanal, kriteria, lokasi/ketelitian, waktu, hash, serta riwayat versi. Pengambilan berita berjalan di server setiap 120 detik.
 - Konfigurasi CCTV HLS/tautan dan persiapan API resmi X, Threads, Instagram, Facebook, TikTok. Credential kosong; collector sosial belum aktif.
 - Token akses API opsional untuk instans yang memerlukannya.
+
+## Preservasi berita — v0.1.5
+
+Berita yang lolos dari kanal RSS disimpan sebelum filter tampilan 6/24/72 jam, sehingga tetap tersedia setelah hilang dari RSS atau keluar dari rentang live. Kategori, lokasi, dan snapshot aturan saat masuk dibekukan pada versi awal; perubahan berikutnya disimpan sebagai versi baru. Berita tanpa lokasi tetap disimpan sebagai lokasi belum diketahui.
+
+Buka **Arsip berita** untuk mencari menurut kanal, kategori awal, lokasi, kata kunci, dan tanggal masuk (WIB), melihat riwayat versi, serta mengekspor halaman JSON. Database terpisah dari cache, default `data/news.sqlite` melalui `ARCHIVE_PATH`. Backup lengkap: `npm run archive:backup -- backups/news-YYYY-MM-DD.sqlite`.
+
+Yang dipreservasi adalah **judul, ringkasan RSS, dan metadata yang diterima**, belum teks lengkap/HTML/WARC halaman artikel. Pengambilan berkala memerlukan server tetap berjalan. Detail penyimpanan, volume persisten, snapshot kriteria, backup dan API tersedia di [panduan arsip berita](docs/NEWS_ARCHIVE.md).
 
 ## Konteks lingkungan — v0.1.2
 
@@ -120,6 +129,8 @@ Saat sumber gagal, data terakhir tetap memiliki `fetchedAt` lama dan status `sta
 
 ## API
 
+Endpoint arsip: `/api/archive`, `/api/archive/:id`, `/api/archive/status`, dan `/api/archive/policies/:fingerprint`.
+
 Endpoint status sosial: `GET /api/social/providers` (metadata saja, tidak mengambil unggahan).
 
 Endpoint lingkungan tambahan: `/api/datasets`, `/api/air-quality?city=jakarta`, `/api/biodiversity`, `/api/context/:id`. Detail di [panduan lingkungan](docs/MANDUM_RIMBA.md).
@@ -155,6 +166,7 @@ config/       Contoh konfigurasi sumber opsional
 tests/        Pengujian regresi tanpa upstream eksternal
 scripts/      Smoke test upstream dan HTTP
 docs/         Riset sumber data dan keputusan arsitektur
+data/         Arsip SQLite runtime (diabaikan Git; volume persisten)
 ```
 
 ## Lisensi dan atribusi

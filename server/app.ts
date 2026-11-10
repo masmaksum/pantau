@@ -1,4 +1,7 @@
 import express from "express";
+import { NewsArchive } from "./archive.js";
+import { NewsPipeline } from "./news-pipeline.js";
+import { archiveRoutes } from "./archive-routes.js";
 import {
   collectOfficialSocial,
   officialSocialStates,
@@ -11,14 +14,7 @@ import type { Event, Snapshot, SourceStatus } from "../shared/types.js";
 import { SourceCache } from "./cache.js";
 import { deduplicate, places, withinHours } from "./domain.js";
 import { isAllowedReport, applyTopicPolicy } from "../shared/topic-policy.js";
-import {
-  BMKG_URL,
-  loadFeed,
-  loadFires,
-  loadQuakes,
-  loadWeather,
-  NEWS_FEEDS,
-} from "./providers.js";
+import { BMKG_URL, loadFires, loadQuakes, loadWeather } from "./providers.js";
 import { isCamera, readConfig } from "./config.js";
 import {
   environmentRoutes,
@@ -27,6 +23,7 @@ import {
 
 export interface Options extends EnvironmentOptions {
   cacheDir?: string;
+  archivePath?: string;
   apiToken?: string;
   firmsKey?: string;
   camerasPath?: string;
@@ -35,6 +32,18 @@ export interface Options extends EnvironmentOptions {
 export function createApp(options: Options = {}) {
   const app = express();
   const cache = new SourceCache(options.cacheDir ?? ".cache");
+  const archive = new NewsArchive(options.archivePath ?? "data/news.sqlite");
+  const newsPipeline = new NewsPipeline(cache, archive);
+  app.locals.pollNews = async () => {
+    const result = await newsPipeline.poll();
+    const health = newsPipeline.health();
+    if (health.status === "error") console.error(health.message);
+    return result;
+  };
+  app.locals.dispose = async () => {
+    await newsPipeline.idle();
+    archive.close();
+  };
   app.disable("x-powered-by");
   app.use((_req, res, next) => {
     res.set({
@@ -45,7 +54,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.4" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.5" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -72,6 +81,7 @@ export function createApp(options: Options = {}) {
     ),
   );
   app.use("/api", environmentRoutes(cache, options));
+  app.use("/api", archiveRoutes(newsPipeline));
   app.get("/api/social/providers", (_req, res) =>
     res.json({
       policy: "official-only",
@@ -89,11 +99,6 @@ export function createApp(options: Options = {}) {
       options.socialEnvironment ?? process.env,
     );
     const providers = [
-      ...NEWS_FEEDS.map((feed) => ({
-        ...feed,
-        ttl: 120_000,
-        load: () => loadFeed(feed.url, feed.name),
-      })),
       {
         id: "bmkg",
         name: "BMKG · Gempa",
@@ -113,35 +118,42 @@ export function createApp(options: Options = {}) {
           ]
         : []),
     ];
-    const results = await Promise.all(
-      providers.map(async (provider) => {
-        const r = await cache.get<Event[]>(
-          provider.id,
-          provider.ttl,
-          provider.load,
-        );
-        // Reapply current policy to last-good snapshots saved before this change.
-        const events = (r.value ?? [])
-          .map(applyTopicPolicy)
-          .filter(isAllowedReport);
-        return {
-          events,
-          status: {
-            id: provider.id,
-            name: provider.name,
-            // Configured feed paths/query strings can contain credentials. Expose only the origin.
-            url: new URL(provider.url).origin,
-            status: r.status,
-            fetchedAt: r.fetchedAt,
-            attemptedAt: r.attemptedAt,
-            count: events.length,
-            message: r.message,
-          } satisfies SourceStatus,
-        };
-      }),
-    );
+    const [newsResults, sensorResults] = await Promise.all([
+      newsPipeline.poll(),
+      Promise.all(
+        providers.map(async (provider) => {
+          const r = await cache.get<Event[]>(
+            provider.id,
+            provider.ttl,
+            provider.load,
+          );
+          // Reapply current policy to last-good snapshots saved before this change.
+          const events = (r.value ?? [])
+            .map(applyTopicPolicy)
+            .filter(isAllowedReport);
+          return {
+            events,
+            status: {
+              id: provider.id,
+              name: provider.name,
+              // Configured feed paths/query strings can contain credentials. Expose only the origin.
+              url: new URL(provider.url).origin,
+              status: r.status,
+              fetchedAt: r.fetchedAt,
+              attemptedAt: r.attemptedAt,
+              count: events.length,
+              message: r.message,
+            } satisfies SourceStatus,
+          };
+        }),
+      ),
+    ]);
+    const results = [
+      ...newsResults,
+      ...sensorResults.map((r) => ({ events: r.events, sources: [r.status] })),
+    ];
     const sources: SourceStatus[] = [
-      ...results.map((r) => r.status),
+      ...results.flatMap((r) => r.sources),
       ...social.sources,
     ];
     if (!options.firmsKey)
@@ -161,6 +173,7 @@ export function createApp(options: Options = {}) {
         .filter((e) => withinHours(e, hours))
         .slice(0, 2500),
       sources,
+      archive: newsPipeline.health(),
     };
     res.json(snapshot);
   });

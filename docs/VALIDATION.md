@@ -72,3 +72,12 @@ Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi 
 - 39 tes lulus, termasuk status kelima provider, placeholder kosong, tidak bocornya credential/ID/query, prioritas HAM dalam normalisasi fixture, validasi permalink/timestamp, proteksi API status, dan pencegahan masuknya cache RSS sosial lama.
 - Build produksi dan smoke berita/BMKG/cuaca berhasil. Kelima sumber sosial pada smoke berstatus `unconfigured`, `count: 0`, tanpa waktu pengambilan.
 - Tidak ada panggilan live ke API platform sosial. Hasil tes fixture bukan bukti akses API atau review izin telah berhasil. Pengujian visual browser tetap belum dilakukan.
+
+## Pembaruan v0.1.5 — preservasi berita
+
+- 49 tes lulus. Cakupan tambahan meliputi arsip setelah restart, snapshot kategori/lokasi/aturan awal, riwayat perubahan, deduplikasi, penolakan topik, lokasi/tanggal tidak diketahui, rollback transaksi dan retry, filter terikat SQL, tanggal WIB, proteksi API, serta pengarsipan sebelum filter jendela live.
+- CLI backup diuji saat database sumber masih terbuka dengan data committed dalam WAL. Backup dapat dibuka kembali dengan jumlah artikel/revisi yang sama; target backup yang sudah ada ditolak.
+- TypeScript dan build produksi berhasil. Bundle utama sekitar 199,9 kB sebelum gzip; chunk HLS tetap dimuat terpisah dan menghasilkan peringatan ukuran yang sama.
+- Smoke HTTP live berhasil: ANTARA 40 berita dan detik 87 berita lolos lalu tersimpan sebagai 127 artikel/127 revisi. Snapshot kriteria kategori dan lokasi cocok dengan konten tersimpan. Dashboard live berisi 128 laporan dalam 24 jam, tujuh berlokasi; BMKG dan Open-Meteo berhasil. Angka berubah mengikuti sumber.
+- Kelima kanal sosial tetap dorman tanpa credential. BMKG/cuaca/lapisan lingkungan tidak dimasukkan ke arsip berita RSS.
+- Isi arsip adalah judul, ringkasan RSS, dan metadata; belum salinan teks lengkap/HTML/WARC halaman penerbit. Deployment, volume persisten produksi, pemulihan bencana, dan skala multi-instans belum diuji. Rendering serta interaksi modal arsip di browser belum diverifikasi; tool browser bersama tidak tersedia pada sesi ini.

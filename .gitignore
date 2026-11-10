@@ -10,3 +10,10 @@ config/cameras.json
 config/social.json
 config/context.json
 config/context-data/
+
+# Persistent news archive and SQLite journals/backups are runtime data.
+data/
+backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

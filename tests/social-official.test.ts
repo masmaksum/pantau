@@ -138,7 +138,8 @@ test("provider status API is protected, and old social RSS caches cannot reappea
       ],
     }),
   );
-  const server = createApp({
+  const app = createApp({
+    archivePath: ":memory:",
     cacheDir: dir,
     apiToken: "test-api-token",
     socialEnvironment: {
@@ -146,7 +147,8 @@ test("provider status API is protected, and old social RSS caches cannot reappea
       X_SEARCH_QUERY: "private-query",
       SOCIAL_CONFIG: "https://not-an-official-provider.example/rss",
     },
-  }).listen(0, "127.0.0.1");
+  });
+  const server = app.listen(0, "127.0.0.1");
   await new Promise<void>((resolve) => server.once("listening", resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   try {
@@ -176,6 +178,7 @@ test("provider status API is protected, and old social RSS caches cannot reappea
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
     );
+    await app.locals.dispose();
     await rm(dir, { recursive: true, force: true });
   }
 });
