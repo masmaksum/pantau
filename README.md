@@ -34,7 +34,7 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Dashboard responsif dengan peta Leaflet, daftar laporan, detail kejadian, dan kondisi sumber.
 - RSS ANTARA dan detikNews; ringkasan hanya jika tersedia dalam RSS, dengan tautan penerbit asli.
 - Pengelompokan laporan: kekerasan aparat, represi aktivis, kekerasan ormas terhadap warga sipil, persekusi, HAM lainnya, gempa, banjir/longsor, kebakaran, demo, politik, dan lainnya.
-- Prioritas pemantauan HAM; kriminal umum, transportasi, ekonomi, dan selebritis tetap dikecualikan. Aturan berlaku pada feed baru, feed sosial, dan cache lama.
+- Prioritas pemantauan HAM; kriminal umum, transportasi, ekonomi, dan selebritis tetap dikecualikan. Aturan berlaku pada feed baru dan cache lama, serta kontrak normalisasi data sosial resmi untuk implementasi nanti.
 - Pencocokan judul ke gazetteer kota/provinsi terbatas. Lokasi ambigu tetap kosong. Setiap pin mencantumkan ketelitian dan metode penentuan lokasi.
 - Gempa BMKG melalui data JSON resmi, dengan waktu, magnitudo, kedalaman, dan episentrum.
 - Cuaca Open-Meteo per kota: suhu, hujan, angin, dan prakiraan tiga hari.
@@ -42,7 +42,7 @@ Untuk Railway atau server lain: build `npm ci && npm run build`, start `npm star
 - Filter 6/24/72 jam, kategori, pencarian, dan hanya laporan berlokasi; pembaruan otomatis 120 detik.
 - Ekspor GeoJSON untuk titik sesuai filter, termasuk sumber, timestamp, ketelitian, dan jumlah laporan yang tidak terpetakan.
 - Cache terakhir yang berhasil, penanda data lama, jeda retry, dan penggabungan request bersamaan ke sumber yang sama.
-- Konfigurasi CCTV HLS/tautan dan feed sosial RSS resmi/berizin. Tidak ada kamera atau posting sosial bawaan yang dibuat-buat.
+- Konfigurasi CCTV HLS/tautan dan persiapan API resmi X, Threads, Instagram, Facebook, TikTok. Credential kosong; collector sosial belum aktif.
 - Token akses API opsional untuk instans yang memerlukannya.
 
 ## Konteks lingkungan — v0.1.2
@@ -71,19 +71,23 @@ Aturan ini berbasis kata kunci, bukan pemahaman konteks. Laporan dapat salah ter
 
 ## Integrasi dan status nyata
 
-| Sumber        | Default                          | Status verifikasi awal                                                                            |
-| ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------- |
-| ANTARA RSS    | Aktif                            | Pengambilan live berhasil                                                                         |
-| detikNews RSS | Aktif                            | Pengambilan live berhasil                                                                         |
-| BMKG gempa    | Aktif                            | Pengambilan live lewat aplikasi berhasil (15 item); pemeriksaan awal klien lain mendapat HTTP 403 |
-| Open-Meteo    | Aktif                            | Pengambilan live berhasil                                                                         |
-| NASA FIRMS    | Perlu MAP_KEY sendiri            | Parser diuji; panggilan live belum diuji tanpa key                                                |
-| X / Threads   | Feed RSS berizin dari operator   | Belum dikonfigurasi; tidak ada scraping atau bypass login                                         |
-| CCTV          | URL publik berizin dari operator | Belum dikonfigurasi; streaming end-to-end belum diuji                                             |
+| Sumber        | Default                                  | Status verifikasi awal                                                                            |
+| ------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| ANTARA RSS    | Aktif                                    | Pengambilan live berhasil                                                                         |
+| detikNews RSS | Aktif                                    | Pengambilan live berhasil                                                                         |
+| BMKG gempa    | Aktif                                    | Pengambilan live lewat aplikasi berhasil (15 item); pemeriksaan awal klien lain mendapat HTTP 403 |
+| Open-Meteo    | Aktif                                    | Pengambilan live berhasil                                                                         |
+| NASA FIRMS    | Perlu MAP_KEY sendiri                    | Parser diuji; panggilan live belum diuji tanpa key                                                |
+| X             | X API v2 · Recent Search                 | Jalur disiapkan; token/query kosong, collector belum aktif                                        |
+| Threads       | Threads API · Keyword Search             | Jalur disiapkan; token/query kosong, izin belum diverifikasi                                      |
+| Instagram     | Instagram API · akun profesional berizin | Jalur disiapkan; credential/akun/versi kosong                                                     |
+| Facebook      | Pages API · Page posts                   | Jalur disiapkan; token/Page/versi kosong                                                          |
+| TikTok        | Display API · video pengguna berizin     | Jalur disiapkan; token kosong, OAuth dan collector belum aktif                                    |
+| CCTV          | URL publik berizin dari operator         | Belum dikonfigurasi; streaming end-to-end belum diuji                                             |
 
 Sumber yang gagal tetap ditampilkan sebagai gagal. Data diambil dari penyedia sumber dengan konfigurasi akses masing-masing. Jangan menganggap `HTTP 200` pada `/api/situation` berarti seluruh sumber berhasil; selalu periksa `sources[].status`.
 
-**Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, X/Threads API langsung, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
+**Belum diimplementasikan:** ringkasan AI/LLM, pembaca artikel lengkap, collector sosial live dan alur OAuth, globe 3D, heatmap, MAGMA, SiPongi, AQMS, radar/angin, TomTom, ADS-B, AIS, BJKT, pasar/IDX, dan korelasi kejadian lintas sumber. Peta laporan menunjukkan titik, bukan batas dampak atau luasan kebakaran. Lapisan konteks dapat menampilkan raster/poligon yang terpisah.
 
 ## Menambahkan sumber opsional
 
@@ -95,9 +99,13 @@ Daftarkan MAP_KEY sendiri di [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/a
 
 Salin `config/cameras.example.json` ke `config/cameras.json`, lalu **ganti URL contoh** dengan URL yang operator berhak gunakan. `type: "hls"` memutar stream; `type: "link"` membuka halaman sumber. HLS dimuat langsung browser, sehingga server asal perlu HTTPS dan izin CORS yang sesuai. PANTAU tidak memproksikan video atau melewati pembatasan sumber. Ketersediaan stream ditampilkan setelah pengguna membukanya.
 
-### Sosial
+### Sosial — hanya API resmi
 
-Salin `config/social.example.json` ke `config/social.json`, lalu ganti dengan feed RSS/Atom yang resmi atau berizin. Ini adapter RSS generik, bukan implementasi API X atau Threads. Batasi konfigurasi pada operator tepercaya: URL konfigurasi diambil oleh server. Jangan memberi pengunjung akses tulis ke konfigurasi. Gunakan ID feed yang unik dan stabil; jika URL sumber diubah, ubah ID atau hapus cache ID lama.
+Jalur X, Threads, Instagram, Facebook, dan TikTok disiapkan di `server/social-official.ts`. Semua placeholder credential dalam `.env.example` sengaja kosong. Status kanal dapat diperiksa melalui `/api/social/providers` dan kartu monitoring sosial pada dashboard.
+
+**Pengambilan data sosial belum diimplementasikan atau diaktifkan.** Mengisi token saja tidak menjalankan collector. OAuth, review izin, request API, pagination, refresh token, dan aktivasi akan dikerjakan pada tahap implementasi. Facebook/Instagram/TikTok mempunyai batas akses akun/Page yang berbeda dari pencarian publik X/Threads.
+
+Adapter RSS sosial lama dihapus. `SOCIAL_CONFIG`, `config/social.json`, dan cache RSS sosial tidak lagi dipakai. RSS penerbit berita tetap digunakan untuk berita. Lihat [panduan jalur resmi, placeholder, batas cakupan dan langkah aktivasi](docs/OFFICIAL_SOCIAL.md).
 
 ## Arti informasi
 
@@ -111,6 +119,8 @@ Salin `config/social.example.json` ke `config/social.json`, lalu ganti dengan fe
 Saat sumber gagal, data terakhir tetap memiliki `fetchedAt` lama dan status `stale`. Data tersebut masih disaring sesuai waktu publikasinya. Pengambilan sukses dengan hasil kosong menggantikan snapshot lama. Pengambilan gagal tidak menghapus snapshot lama atau membuat data simulasi. Nama “pertama dibaca dalam pengambilan ini” bukan catatan first-seen permanen per kejadian.
 
 ## API
+
+Endpoint status sosial: `GET /api/social/providers` (metadata saja, tidak mengambil unggahan).
 
 Endpoint lingkungan tambahan: `/api/datasets`, `/api/air-quality?city=jakarta`, `/api/biodiversity`, `/api/context/:id`. Detail di [panduan lingkungan](docs/MANDUM_RIMBA.md).
 

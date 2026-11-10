@@ -8,7 +8,6 @@ const app = createApp({
   apiToken: process.env.PANTAU_API_TOKEN,
   firmsKey: process.env.FIRMS_MAP_KEY,
   camerasPath: process.env.CAMERAS_CONFIG,
-  socialPath: process.env.SOCIAL_CONFIG,
   gfwKey: process.env.GFW_API_KEY,
   contextManifest: process.env.CONTEXT_CONFIG,
   contextRoot: process.env.CONTEXT_DATA_DIR,

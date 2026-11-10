@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { mountEnvironment } from "./environment-ui.js";
+import { mountOfficialSocial } from "./social-ui.js";
 import type Hls from "hls.js";
 import {
   isAllowedReport,
@@ -113,11 +114,11 @@ document.querySelector("#app")!.innerHTML = `
       <div class="wire-footer"><span id="updated">Belum tersinkron</span><button id="export" class="text-button">↓ GeoJSON</button></div>
     </section>
   </section>
-  <section class="channels" id="channels"><div class="channel-intro"><div class="eyebrow">04 / KANAL TAMBAHAN</div><h2>Konteks yang lebih dekat.</h2><p>Sumber tambahan untuk melengkapi gambaran situasi.</p></div><article class="channel-card"><div class="panel-title"><span>CCTV REGIONAL</span><span class="small-tag" id="camera-count">KONFIGURASI</span></div><h3>Lihat langsung dari sumber.</h3><div id="cameras"><p class="muted">Memeriksa konfigurasi kamera…</p></div></article><article class="channel-card"><div class="panel-title"><span>TRANSPARANSI DATA</span><span class="small-tag">TERBUKA</span></div><h3>Setiap sinyal punya asal.</h3><p>Berita dari RSS penerbit. Gempa dari BMKG. Cuaca dari Open-Meteo. Hotspot opsional dari NASA FIRMS.</p><p class="muted">Feed X/Threads perlu sumber resmi atau berizin yang dikonfigurasi operator. Tidak ada data sosial simulasi.</p><button id="show-method" class="text-button">Baca cara kerja ↗</button></article></section>
+  <section class="channels" id="channels"><div class="channel-intro"><div class="eyebrow">04 / KANAL TAMBAHAN</div><h2>Konteks yang lebih dekat.</h2><p>Sumber tambahan untuk melengkapi gambaran situasi.</p></div><article class="channel-card"><div class="panel-title"><span>CCTV REGIONAL</span><span class="small-tag" id="camera-count">KONFIGURASI</span></div><h3>Lihat langsung dari sumber.</h3><div id="cameras"><p class="muted">Memeriksa konfigurasi kamera…</p></div></article><article class="channel-card"><div class="panel-title"><span>TRANSPARANSI DATA</span><span class="small-tag">TERBUKA</span></div><h3>Setiap sinyal punya asal.</h3><p>Berita dari RSS penerbit. Gempa dari BMKG. Cuaca dari Open-Meteo. Hotspot opsional dari NASA FIRMS.</p><p class="muted">Kanal X, Threads, Instagram, Facebook, dan TikTok disiapkan melalui API resmi; seluruh kanal belum mengambil data.</p><button id="show-method" class="text-button">Baca cara kerja ↗</button></article></section>
   <footer><span class="footer-brand">PANTAU<span> / </span>BUILT FOR CONTEXT.</span><span>Pembaruan 120 detik · Waktu WIB · Implementasi mandiri</span></footer>
 </main>
 <dialog id="detail"><button class="dialog-close" data-close="detail" aria-label="Tutup detail">×</button><div id="detail-content"></div></dialog>
-<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Laporan tentang kekerasan aparat, represi aktivis, kekerasan ormas, persekusi, dan hak asasi lainnya diprioritaskan meskipun memuat istilah topik yang dikecualikan. Label HAM adalah klasifikasi topik, bukan temuan hukum; dugaan dan bantahan tetap mengikuti sumber. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Fitur SITREP seperti pasar, AIS, ADS-B, MAGMA, lalu lintas TomTom, pembaca artikel lengkap, dan analisis AI belum diimplementasikan pada versi ini.</p></dialog>
+<dialog id="method"><button class="dialog-close" data-close="method" aria-label="Tutup cara kerja">×</button><div class="eyebrow">METODE & KETERBATASAN</div><h2>Dari sumber ke situasi.</h2><p>PANTAU membaca RSS dan API sumber, menyeragamkan laporan, lalu mengelompokkannya memakai kata kunci. Kategori bersifat heuristik, bukan penilaian AI atau verifikasi fakta.</p><p>Kriminal umum, transportasi, ekonomi, dan selebritis dikecualikan berdasarkan judul, ringkasan, serta kategori RSS/Atom. Laporan tentang kekerasan aparat, represi aktivis, kekerasan ormas, persekusi, dan hak asasi lainnya diprioritaskan meskipun memuat istilah topik yang dikecualikan. Label HAM adalah klasifikasi topik, bukan temuan hukum; dugaan dan bantahan tetap mengikuti sumber. Penyaringan berbasis kata kunci masih dapat keliru.</p><p>Lokasi berita hanya dicari dalam judul menggunakan daftar kota/provinsi terbatas. Judul dengan beberapa lokasi atau lokasi yang tidak dikenali tidak dipasangkan ke peta. Titik adalah pusat wilayah perkiraan, bukan alamat kejadian.</p><p>Laporan dengan URL penerbit yang sama digabung. Dua URL atau judul serupa tidak otomatis berarti dua kejadian, maupun dua konfirmasi independen. Waktu filter menggunakan waktu publikasi; waktu kejadian bisa berbeda.</p><p>Cache terakhir tetap tersedia saat sumber gagal dan ditandai “data lama”. Waktu pengambilan tercantum di tiap sumber. Hotspot adalah anomali panas, bukan konfirmasi kebakaran. Cuaca adalah keluaran model.</p><p>Collector dan koneksi akun media sosial melalui API resmi belum diaktifkan. Fitur pasar, AIS, ADS-B, MAGMA, pembaca artikel lengkap, dan analisis AI belum tersedia.</p></dialog>
 <dialog id="connection"><button class="dialog-close" data-close="connection" aria-label="Tutup pengaturan">×</button><div class="eyebrow">KONEKSI</div><h2>Token akses instans</h2><p>Isi hanya bila operator mengaktifkan PANTAU_API_TOKEN. Token disimpan pada sesi tab ini.</p><form id="token-form"><input type="password" id="api-token" placeholder="Token akses" aria-label="Token akses" autocomplete="off" /><button class="solid-button" type="submit">Simpan & hubungkan</button></form></dialog>
 <dialog id="camera-dialog"><button class="dialog-close" data-close="camera-dialog" aria-label="Tutup kamera">×</button><h2 id="camera-name"></h2><video id="camera-video" controls playsinline></video><p id="camera-message" role="status"></p></dialog>
 <div id="toast" role="status" hidden></div>`;
@@ -162,6 +163,7 @@ L.control
   )
   .addTo(map);
 const environment = mountEnvironment(map, api, fmtTime);
+const officialSocial = mountOfficialSocial(api);
 const markers = L.layerGroup().addTo(map);
 const markerIndex = new Map<string, L.CircleMarker>();
 let snapshot: Snapshot | null = null;
@@ -460,6 +462,7 @@ async function initializeExtras() {
     weather(),
     cameras(),
     environment.refresh($<HTMLSelectElement>("city").value),
+    officialSocial.refresh(),
   ]);
 }
 $("search").oninput = render;

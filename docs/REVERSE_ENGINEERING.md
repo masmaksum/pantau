@@ -1,5 +1,7 @@
 # Rekonstruksi SITREP → PANTAU
 
+> Catatan historis implementasi awal. Sejak v0.1.4 jalur sosial RSS dalam dokumen ini sudah dihentikan; kebijakan dan persiapan terkini ada di [jalur sosial resmi](OFFICIAL_SOCIAL.md).
+
 Tanggal pemeriksaan: **10 November 2026 (WIB)**. Target referensi: `https://sitrep-production.up.railway.app/`.
 
 ## Tujuan dan ruang lingkup

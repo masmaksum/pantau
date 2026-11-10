@@ -63,3 +63,12 @@ Saat pemeriksaan awal, klien Python menerima HTTP 403 dari BMKG; klien aplikasi 
 - Build dan smoke upstream lulus. Hasil smoke saat pemeriksaan: 127 laporan dalam 24 jam; jumlah berubah mengikuti sumber.
 - Judul, ringkasan, sumber, dugaan, bantahan, dan status `reported` dipertahankan. Label HAM adalah kategori pemantauan heuristik, bukan verifikasi tuduhan atau putusan pelanggaran.
 - Sumber feed tidak berubah. Kategori tambahan tidak menjamin cakupan lengkap isu HAM. Pengujian visual browser belum dilakukan.
+
+## Pembaruan v0.1.4 — persiapan jalur sosial resmi
+
+- Lima kanal disiapkan: X API v2, Threads API, Instagram API, Facebook Pages API, TikTok Display API.
+- Seluruh placeholder credential/target dalam `.env.example` kosong. OAuth, collector live, dan aktivasi belum diimplementasikan. Token terisi hanya mengubah tahap menjadi `implementation_pending`, tidak memulai request.
+- Adapter RSS sosial dan contoh konfigurasinya dihapus; `SOCIAL_CONFIG` dan cache RSS sosial tidak dipakai. RSS berita tetap dipakai.
+- 39 tes lulus, termasuk status kelima provider, placeholder kosong, tidak bocornya credential/ID/query, prioritas HAM dalam normalisasi fixture, validasi permalink/timestamp, proteksi API status, dan pencegahan masuknya cache RSS sosial lama.
+- Build produksi dan smoke berita/BMKG/cuaca berhasil. Kelima sumber sosial pada smoke berstatus `unconfigured`, `count: 0`, tanpa waktu pengambilan.
+- Tidak ada panggilan live ke API platform sosial. Hasil tes fixture bukan bukti akses API atau review izin telah berhasil. Pengujian visual browser tetap belum dilakukan.

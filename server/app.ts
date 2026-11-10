@@ -1,4 +1,9 @@
 import express from "express";
+import {
+  collectOfficialSocial,
+  officialSocialStates,
+  type SocialEnvironment,
+} from "./social-official.js";
 import { timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -14,7 +19,7 @@ import {
   loadWeather,
   NEWS_FEEDS,
 } from "./providers.js";
-import { isCamera, isSocialFeed, readConfig } from "./config.js";
+import { isCamera, readConfig } from "./config.js";
 import {
   environmentRoutes,
   type EnvironmentOptions,
@@ -25,7 +30,7 @@ export interface Options extends EnvironmentOptions {
   apiToken?: string;
   firmsKey?: string;
   camerasPath?: string;
-  socialPath?: string;
+  socialEnvironment?: SocialEnvironment;
 }
 export function createApp(options: Options = {}) {
   const app = express();
@@ -40,7 +45,7 @@ export function createApp(options: Options = {}) {
     next();
   });
   app.get("/healthz", (_req, res) =>
-    res.json({ status: "ok", service: "pantau", version: "0.1.3" }),
+    res.json({ status: "ok", service: "pantau", version: "0.1.4" }),
   );
   app.use("/api", (req, res, next) => {
     res.set("Cache-Control", "no-store");
@@ -67,15 +72,21 @@ export function createApp(options: Options = {}) {
     ),
   );
   app.use("/api", environmentRoutes(cache, options));
+  app.get("/api/social/providers", (_req, res) =>
+    res.json({
+      policy: "official-only",
+      enabled: false,
+      providers: officialSocialStates(options.socialEnvironment ?? process.env),
+    }),
+  );
   app.get("/api/situation", async (req, res) => {
     const hours = Number(req.query.hours ?? 24);
     if (![6, 24, 72].includes(hours)) {
       res.status(400).json({ error: "hours harus 6, 24, atau 72" });
       return;
     }
-    const social = await readConfig(
-      options.socialPath ?? "config/social.json",
-      isSocialFeed,
+    const social = await collectOfficialSocial(
+      options.socialEnvironment ?? process.env,
     );
     const providers = [
       ...NEWS_FEEDS.map((feed) => ({
@@ -101,13 +112,6 @@ export function createApp(options: Options = {}) {
             },
           ]
         : []),
-      ...social.items.map((feed) => ({
-        id: `social-${feed.id}`,
-        name: feed.name,
-        url: feed.url,
-        ttl: 180_000,
-        load: () => loadFeed(feed.url, feed.name),
-      })),
     ];
     const results = await Promise.all(
       providers.map(async (provider) => {
@@ -136,7 +140,10 @@ export function createApp(options: Options = {}) {
         };
       }),
     );
-    const sources: SourceStatus[] = results.map((r) => r.status);
+    const sources: SourceStatus[] = [
+      ...results.map((r) => r.status),
+      ...social.sources,
+    ];
     if (!options.firmsKey)
       sources.push({
         id: "firms",
@@ -147,19 +154,6 @@ export function createApp(options: Options = {}) {
         attemptedAt: new Date().toISOString(),
         count: 0,
         message: "Tambahkan FIRMS_MAP_KEY untuk mengaktifkan hotspot.",
-      });
-    if (!social.items.length)
-      sources.push({
-        id: "social",
-        name: "Sosial · RSS",
-        url: "https://www.threads.com/",
-        status: social.error ? "error" : "unconfigured",
-        fetchedAt: null,
-        attemptedAt: new Date().toISOString(),
-        count: 0,
-        message:
-          social.error ??
-          "Tambahkan feed resmi atau berizin dalam config/social.json.",
       });
     const snapshot: Snapshot = {
       generatedAt: new Date().toISOString(),

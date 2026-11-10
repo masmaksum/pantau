@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
 import { createApp } from "../server/app.js";
-import { isCamera, isSocialFeed } from "../server/config.js";
+import { isCamera } from "../server/config.js";
 
 test("API access token is enforced; visitor input cannot become a fetch URL", async () => {
   const server = createApp({ apiToken: "test-token" }).listen(0, "127.0.0.1");
@@ -43,7 +43,7 @@ test("API access token is enforced; visitor input cannot become a fetch URL", as
     );
   }
 });
-test("operator config rejects unsafe media links and malformed IDs", () => {
+test("operator config rejects unsafe media links", () => {
   assert.equal(
     isCamera({
       id: "cam",
@@ -54,21 +54,5 @@ test("operator config rejects unsafe media links and malformed IDs", () => {
       sourceUrl: "https://example.com",
     }),
     false,
-  );
-  assert.equal(
-    isSocialFeed({
-      id: "../secret",
-      name: "Test",
-      url: "https://example.com/rss",
-    }),
-    false,
-  );
-  assert.equal(
-    isSocialFeed({
-      id: "official",
-      name: "Official",
-      url: "https://example.com/rss",
-    }),
-    true,
   );
 });
